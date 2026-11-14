@@ -50,7 +50,7 @@
   /* a tutto schermo la X di iOS sta in alto a sinistra: lascio spazio */
   .side { transition: padding .3s; }
   body.fs .side { padding-top: 40px; }
-  .clockmini { text-align: center; line-height: 1.15; }
+  .clockmini { text-align: center; line-height: 1.15; -webkit-touch-callout: none; cursor: pointer; }
   .clock { font-size: 30px; font-weight: 700; letter-spacing: -1px; line-height: 1; font-variant-numeric: tabular-nums; }
   .clocksub { font-size: 13px; color: var(--muted); margin-top: 3px; white-space: nowrap; }
   .date { text-transform: capitalize; }
@@ -101,6 +101,7 @@
   .chip.room b { font-weight: 700; color: var(--text); }
   .chip.room span { color: var(--muted); font-weight: 600; }
   .alerts .refreshhint { margin: 0; flex: none; }
+  .chipsep { flex: none; width: 1px; align-self: stretch; margin: 2px 6px; background: rgba(255,255,255,.2); }
   .chip.green { background: rgba(48,209,88,.18); border-color: rgba(48,209,88,.5); color: #a5f0b8; }
   .chip.grey { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.18); color: var(--text); }
   .chip.red { background: rgba(255,69,58,.25); border-color: rgba(255,69,58,.6); color: #ffb4ae; }
@@ -516,7 +517,7 @@ Luce | lampadina | interruttore`;
         head.appendChild(hint);
         sec.appendChild(head);
       } else if (g.name) sec.appendChild(el('h3', null, g.name));
-      const grid = el('div', 'grid' + (/^(casa|luci)$/i.test(page.name) && !onlySensors ? ' sq' : ''));
+      const grid = el('div', 'grid' + ((/^(casa|luci)$/i.test(page.name) || isRoomPage(page)) && !onlySensors ? ' sq' : ''));
       g.items.forEach(it => grid.appendChild(tile(it)));
       sec.appendChild(grid);
       main.appendChild(sec);
@@ -559,11 +560,21 @@ Luce | lampadina | interruttore`;
       // come in Casa di Apple: temperatura, umidità e sensori in alto
       const its = page.groups.flatMap(g => g.items).filter(i => i.sensor && !i.hidden);
       if (!its.length) { box.hidden = true; return; }
-      const h = el('button', 'refreshhint');
-      h.dataset.stale = its.some(i => ['porta', 'finestra', 'movimento'].includes(i.icon)) ? 1 : 10;
-      h.addEventListener('click', refreshNow);
-      box.appendChild(h);
-      for (const it of its) {
+      const clima = its.filter(i => ['termometro', 'goccia'].includes(i.icon));
+      const aperture = its.filter(i => !['termometro', 'goccia'].includes(i.icon));
+      const sets = [[clima, 10], [aperture, 1]].filter(([a]) => a.length);
+      sets.forEach(([set, mins], k) => {
+        if (k) box.appendChild(el('span', 'chipsep'));
+        const h = el('button', 'refreshhint'); h.dataset.stale = mins; h.addEventListener('click', refreshNow);
+        box.appendChild(h);
+        addChips(set);
+      });
+      box.hidden = false;
+      updateRefreshHints();
+      return;
+    }
+    function addChips(list) {
+      for (const it of list) {
         const info = sensorInfo(it), known = !/↻/.test(info.text);
         const c = el('button', 'chip ' + (info.alert ? '' : 'grey'));
         c.innerHTML = svg(it.icon);
@@ -572,9 +583,6 @@ Luce | lampadina | interruttore`;
         c.addEventListener('click', refreshNow);
         box.appendChild(c);
       }
-      box.hidden = false;
-      updateRefreshHints();
-      return;
     }
     if (page && /^clima$/i.test(page.name)) {
       // una pillola per stanza: "Soggiorno 19,9° · 60%"
@@ -1046,6 +1054,16 @@ Luce | lampadina | interruttore`;
   $('btnRefresh').addEventListener('click', () => run({ name: 'Stati aggiornati', shortcut: 'Aggiorna dashboard', toggle: false }, null));
   $('btnDim').addEventListener('click', () => setDim(true));
   $('iconList').innerHTML = PICKABLE.map(k => `<span>${svg(k)}${k}</span>`).join('');
+  $('btnSettings').hidden = true;
+  // Impostazioni nascoste: tieni premuto l'orologio per 1,5 secondi
+  (() => {
+    let t;
+    const start = () => { clearTimeout(t); t = setTimeout(() => $('btnSettings').click(), 1500); };
+    const stop = () => clearTimeout(t);
+    const c = document.querySelector('.clockmini');
+    c.addEventListener('pointerdown', start); ['pointerup', 'pointerleave', 'pointercancel'].forEach(e => c.addEventListener(e, stop));
+    c.addEventListener('contextmenu', e => e.preventDefault());
+  })();
   $('btnSettings').addEventListener('click', () => askPin('Codice per le impostazioni', () => {
     $('cfg').value = config; $('city').value = place ? place.name : '';
     $('optReturn').checked = opts.autoReturn; $('optDim').checked = opts.autoDim;
