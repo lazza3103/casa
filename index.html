@@ -197,7 +197,40 @@
   /* Schermo a riposo */
   .dim { position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 1.5s; z-index: 20; display: grid; place-items: center; }
   .dim.active { opacity: 1; pointer-events: auto; }
-  .dim .dclock { font-size: 128px; font-weight: 700; color: #5c5c62; letter-spacing: -4px; font-variant-numeric: tabular-nums; }
+  /* Screensaver in stile StandBy: orologio quadrato a sinistra, calendario e meteo a destra */
+  .sb { max-height: 100vh; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; width: min(100%, 980px); height: 100%;
+        padding: max(16px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); box-sizing: border-box; }
+  .sbw { background: #161618; border-radius: 30px; color: rgba(255,255,255,.88); overflow: hidden; }
+  .sbclock { height: 100%; aspect-ratio: 1; position: relative; display: grid; place-items: center; }
+  .sbclock { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .sbclock .dclock { display: none; }
+  .sbclock .ring { position: absolute; inset: 0; width: 100%; height: 100%; }
+  /* ora in cifre alte e strette, su una riga (come il widget Orologio di iPhone) */
+  .dtime { font-size: 36vh; font-weight: 700; line-height: 1; color: #f2f2f7; letter-spacing: -0.5vh;
+           font-variant-numeric: tabular-nums; transform: scaleX(.55); transform-origin: center; white-space: nowrap; }
+  .sbcol { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 16px; min-height: 0; }
+  .sbcal { display: flex; align-items: center; gap: 22px; padding: clamp(8px, 3.5vh, 16px) 24px; }
+  .calday { text-align: center; line-height: 1; }
+  .calwd { color: #ff453a; font-size: 17px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+  .calnum { font-size: clamp(38px, 14vh, 62px); font-weight: 300; letter-spacing: -2px; margin-top: 4px; }
+  .calmonth { font-size: 26px; font-weight: 700; text-transform: capitalize; }
+  .calyear { font-size: 17px; color: rgba(255,255,255,.5); margin-top: 4px; }
+  .sbwx { min-height: 0; display: flex; flex-direction: column; justify-content: space-between; padding: clamp(10px, 3.5vh, 16px) 22px clamp(10px, 4vh, 18px);
+          background: #161618; }
+  /* sopra la linea: metà sinistra città e temperatura, metà destra icona e descrizione, tutto lo spazio usato */
+  .wxtop { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 12px; overflow: hidden; padding-bottom: 6px; }
+  .wxtop > div:first-child { text-align: center; }
+  .wxcity { font-size: clamp(15px, 4.5vh, 22px); font-weight: 700; }
+  .wxtemp { font-size: clamp(36px, 17vh, 92px); letter-spacing: -2px; font-weight: 300; line-height: 1; margin-top: 4px; }
+  .wxnow { display: flex; flex-direction: column; align-items: center; text-align: center; border-left: 1px solid rgba(255,255,255,.12); }
+  .wxicon svg { width: clamp(30px, 12vh, 68px); height: clamp(30px, 12vh, 68px); }
+  .wxdesc { font-size: clamp(14px, 4.5vh, 21px); font-weight: 600; margin-top: 4px; }
+  .wxhl { font-size: clamp(12px, 3.6vh, 17px); color: rgba(255,255,255,.65); margin-top: 2px; }
+  .wxhours { flex: none; display: flex; justify-content: space-between; gap: 6px; border-top: 1px solid rgba(255,255,255,.15); padding-top: 12px; }
+  .wxh { text-align: center; font-size: 13px; color: rgba(255,255,255,.7); flex: 1; }
+  .wxh svg { width: 24px; height: 24px; display: block; margin: clamp(2px, 1.2vh, 6px) auto; }
+  .wxhours { padding-top: clamp(6px, 2.5vh, 12px) !important; }
+  .wxh b { font-size: 15px; color: rgba(255,255,255,.9); font-weight: 600; }
 
   /* Tastierino codice */
   .tile .lock { position: absolute; top: 9px; right: 11px; font-size: 14px; opacity: .55; }
@@ -272,7 +305,24 @@
   </main>
 </div>
 
-<div class="dim" id="dim"><div class="dclock" id="dclock"></div></div>
+<div class="dim" id="dim">
+  <div class="sb">
+    <div class="sbw sbclock"><svg class="ring" viewBox="0 0 200 200" aria-hidden="true"><line x1="100.0" y1="17.0" x2="100.0" y2="8.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="109.1" y1="13.0" x2="109.7" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="118.5" y1="12.9" x2="119.6" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="128.3" y1="12.8" x2="129.9" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="138.9" y1="12.6" x2="141.0" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="148.6" y1="15.8" x2="153.1" y2="8.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="163.9" y1="12.0" x2="166.8" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="179.5" y1="11.7" x2="182.8" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="188.3" y1="20.5" x2="192.0" y2="17.2" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="188.0" y1="36.1" x2="192.0" y2="33.2" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="184.2" y1="51.4" x2="192.0" y2="46.9" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="187.4" y1="61.1" x2="192.0" y2="59.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.2" y1="71.7" x2="192.0" y2="70.1" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.1" y1="81.5" x2="192.0" y2="80.4" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.0" y1="90.9" x2="192.0" y2="90.3" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="183.0" y1="100.0" x2="192.0" y2="100.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="187.0" y1="109.1" x2="192.0" y2="109.7" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.1" y1="118.5" x2="192.0" y2="119.6" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.2" y1="128.3" x2="192.0" y2="129.9" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.4" y1="138.9" x2="192.0" y2="141.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="184.2" y1="148.6" x2="192.0" y2="153.1" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="188.0" y1="163.9" x2="192.0" y2="166.8" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="188.3" y1="179.5" x2="192.0" y2="182.8" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="179.5" y1="188.3" x2="182.8" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="163.9" y1="188.0" x2="166.8" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="148.6" y1="184.2" x2="153.1" y2="192.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="138.9" y1="187.4" x2="141.0" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="128.3" y1="187.2" x2="129.9" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="118.5" y1="187.1" x2="119.6" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="109.1" y1="187.0" x2="109.7" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="100.0" y1="183.0" x2="100.0" y2="192.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="90.9" y1="187.0" x2="90.3" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="81.5" y1="187.1" x2="80.4" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="71.7" y1="187.2" x2="70.1" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="61.1" y1="187.4" x2="59.0" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="51.4" y1="184.2" x2="46.9" y2="192.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="36.1" y1="188.0" x2="33.2" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="20.5" y1="188.3" x2="17.2" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="11.7" y1="179.5" x2="8.0" y2="182.8" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.0" y1="163.9" x2="8.0" y2="166.8" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="15.8" y1="148.6" x2="8.0" y2="153.1" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="12.6" y1="138.9" x2="8.0" y2="141.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.8" y1="128.3" x2="8.0" y2="129.9" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.9" y1="118.5" x2="8.0" y2="119.6" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="13.0" y1="109.1" x2="8.0" y2="109.7" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="17.0" y1="100.0" x2="8.0" y2="100.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="13.0" y1="90.9" x2="8.0" y2="90.3" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.9" y1="81.5" x2="8.0" y2="80.4" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.8" y1="71.7" x2="8.0" y2="70.1" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.6" y1="61.1" x2="8.0" y2="59.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="15.8" y1="51.4" x2="8.0" y2="46.9" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="12.0" y1="36.1" x2="8.0" y2="33.2" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="11.7" y1="20.5" x2="8.0" y2="17.2" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="20.5" y1="11.7" x2="17.2" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="36.1" y1="12.0" x2="33.2" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="51.4" y1="15.8" x2="46.9" y2="8.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="61.1" y1="12.6" x2="59.0" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="71.7" y1="12.8" x2="70.1" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="81.5" y1="12.9" x2="80.4" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="90.9" y1="13.0" x2="90.3" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/></svg><div class="dclock" id="dclock"></div><div class="dtime" id="dtime"></div></div>
+    <div class="sbcol">
+      <div class="sbw sbcal">
+        <div class="calday"><div class="calwd" id="calwd"></div><div class="calnum" id="calnum"></div></div>
+        <div class="calinfo"><div class="calmonth" id="calmonth"></div><div class="calyear" id="calyear"></div></div>
+      </div>
+      <div class="sbw sbwx" id="sbwx">
+        <div class="wxtop">
+          <div><div class="wxcity" id="wxcity">Meteo</div><div class="wxtemp" id="wxtemp">--°</div></div>
+          <div class="wxnow"><span class="wxicon" id="wxicon"></span><div class="wxdesc" id="wxdesc">Imposta la città in ⚙︎</div><div class="wxhl" id="wxhl"></div></div>
+        </div>
+        <div class="wxhours" id="wxhours"></div>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <div class="pin-bg" id="pinBg">
@@ -984,7 +1034,40 @@ Luce | lampadina | interruttore`;
     const now = new Date();
     $('clock').textContent = $('dclock').textContent = fmtTime.format(now);
     $('date').textContent = fmtDate.format(now);
+    $('dtime').textContent = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+    if ($('dim').classList.contains('active')) drawCalendar(now);
   }
+  // Icone meteo (stile widget Meteo di iPhone)
+  const WXI = {
+    sole: '<circle cx="12" cy="12" r="4.2" fill="#ffd60a" stroke="none"/><g stroke="#ffd60a" stroke-width="1.8" stroke-linecap="round"><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></g>',
+    luna: '<path d="M19.5 14.5A7.5 7.5 0 1 1 9.5 4.5a6 6 0 0 0 10 10z" fill="#ffd60a" stroke="none"/>',
+    nuvola: '<path d="M7 18.5h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.5 9.5a4.5 4.5 0 0 0 .5 9z" fill="#e5e5ea" stroke="none"/>',
+    solenuvola: '<circle cx="8.5" cy="8" r="3.4" fill="#ffd60a" stroke="none"/><path d="M8.5 20h9.5a3.6 3.6 0 0 0 .5-7.15A5.4 5.4 0 0 0 8.2 11.6 4.2 4.2 0 0 0 8.5 20z" fill="#e5e5ea" stroke="none"/>',
+    lunanuvola: '<path d="M13 7.5A5 5 0 1 1 6.2 3a4 4 0 0 0 6.8 4.5z" fill="#ffd60a" stroke="none" transform="translate(1 1)"/><path d="M8.5 20h9.5a3.6 3.6 0 0 0 .5-7.15A5.4 5.4 0 0 0 8.2 11.6 4.2 4.2 0 0 0 8.5 20z" fill="#aeaeb2" stroke="none"/>',
+    pioggia: '<path d="M7 14.5h10.5a3.7 3.7 0 0 0 .6-7.35A5.6 5.6 0 0 0 6.6 6.4 4.1 4.1 0 0 0 7 14.5z" fill="#e5e5ea" stroke="none"/><g stroke="#64d2ff" stroke-width="1.8" stroke-linecap="round"><path d="M8.5 17l-1 3M12.5 17l-1 3M16.5 17l-1 3"/></g>',
+    neve: '<path d="M7 14.5h10.5a3.7 3.7 0 0 0 .6-7.35A5.6 5.6 0 0 0 6.6 6.4 4.1 4.1 0 0 0 7 14.5z" fill="#e5e5ea" stroke="none"/><g fill="#64d2ff" stroke="none"><circle cx="8" cy="18.5" r="1.1"/><circle cx="12" cy="20" r="1.1"/><circle cx="16" cy="18.5" r="1.1"/></g>',
+    temporale: '<path d="M7 14h10.5a3.7 3.7 0 0 0 .6-7.35A5.6 5.6 0 0 0 6.6 5.9 4.1 4.1 0 0 0 7 14z" fill="#aeaeb2" stroke="none"/><path d="M12.5 14.5l-2.5 4h3l-1.8 4" stroke="#ffd60a" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+    nebbia: '<g stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"><path d="M4 9h16M3 13h18M5 17h14"/></g>'
+  };
+  function wxKind(code, night) {
+    if (code === 0 || code === 1) return night ? 'luna' : 'sole';
+    if (code === 2) return night ? 'lunanuvola' : 'solenuvola';
+    if (code === 3) return 'nuvola';
+    if (code === 45 || code === 48) return 'nebbia';
+    if ([71, 73, 75, 77, 85, 86].includes(code)) return 'neve';
+    if (code >= 95) return 'temporale';
+    return 'pioggia';
+  }
+  const wxSvg = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${WXI[k]}</svg>`;
+
+  function drawCalendar(now) {
+    if (!$('calwd')) return;
+    $('calwd').textContent = new Intl.DateTimeFormat('it-IT', { weekday: 'long' }).format(now);
+    $('calnum').textContent = now.getDate();
+    $('calmonth').textContent = new Intl.DateTimeFormat('it-IT', { month: 'long' }).format(now);
+    $('calyear').textContent = now.getFullYear();
+  }
+
   const WMO = { 0: 'Sereno', 1: 'Poco nuvoloso', 2: 'Parz. nuvoloso', 3: 'Coperto', 45: 'Nebbia', 48: 'Nebbia',
     51: 'Pioviggine', 53: 'Pioviggine', 55: 'Pioviggine', 61: 'Pioggia debole', 63: 'Pioggia', 65: 'Pioggia forte',
     66: 'Pioggia gelata', 67: 'Pioggia gelata', 71: 'Neve debole', 73: 'Neve', 75: 'Neve forte', 77: 'Nevischio',
@@ -992,8 +1075,31 @@ Luce | lampadina | interruttore`;
   async function loadWeather() {
     if (!place) { $('wx').textContent = ''; return; }
     try {
-      const d = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}&current=temperature_2m,weather_code&timezone=auto`)).json();
-      $('wx').textContent = ` · ${Math.round(d.current.temperature_2m)}° ${WMO[d.current.weather_code] || ''}`;
+      const d = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}&current=temperature_2m,weather_code,is_day&hourly=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=2`)).json();
+      const t = Math.round(d.current.temperature_2m), code = d.current.weather_code, night = d.current.is_day === 0;
+      const desc = WMO[code] || '';
+      $('wx').textContent = ` · ${t}° ${desc}`;
+      // widget meteo dello screensaver
+      $('wxcity').textContent = place.name;
+      $('wxtemp').textContent = `${t}°`;
+      $('wxicon').innerHTML = wxSvg(wxKind(code, night));
+      $('wxdesc').textContent = desc;
+      if (d.daily) $('wxhl').textContent = `Max ${Math.round(d.daily.temperature_2m_max[0])}°  Min ${Math.round(d.daily.temperature_2m_min[0])}°`;
+      const kind = wxKind(code, night);
+
+      const hrs = $('wxhours'); hrs.textContent = '';
+      if (d.hourly) {
+        const nowH = new Date(); nowH.setMinutes(0, 0, 0);
+        let i = d.hourly.time.findIndex(x => new Date(x) >= nowH); if (i < 0) i = 0;
+        for (let k = 0; k < 6 && i + k < d.hourly.time.length; k++) {
+          const j = i + k, hh = new Date(d.hourly.time[j]).getHours();
+          const cell = el('div', 'wxh');
+          cell.appendChild(el('div', null, k === 0 ? 'Ora' : String(hh).padStart(2, '0')));
+          cell.insertAdjacentHTML('beforeend', wxSvg(wxKind(d.hourly.weather_code[j], d.hourly.is_day && d.hourly.is_day[j] === 0)));
+          cell.appendChild(el('b', null, Math.round(d.hourly.temperature_2m[j]) + '°'));
+          hrs.appendChild(cell);
+        }
+      }
     } catch {}
   }
   async function findCity() {
@@ -1014,6 +1120,7 @@ Luce | lampadina | interruttore`;
   // Durante lo screensaver la barra di Safari diventa nera e si confonde con lo sfondo
   const setDim = on => {
     $('dim').classList.toggle('active', on);
+    if (on) drawCalendar(new Date());
     $('themeColor').setAttribute('content', on ? '#000000' : '#1a1512');
     document.documentElement.style.background = on ? '#000' : '';
     document.body.style.background = on ? '#000' : '';
