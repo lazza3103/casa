@@ -137,6 +137,13 @@
   .grid.sq .tile .ic { width: 38px; height: 38px; font-size: 20px; }
   .grid.sq .tile .nm { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 15px; }
   .grid.sq .tile .lock { top: 10px; right: 10px; }
+  /* quadrati piccoli (fuori dal tutto schermo) */
+  .grid.sq.tiny { gap: 8px; }
+  .grid.sq.tiny .tile { padding: 8px 10px; gap: 2px; }
+  .grid.sq.tiny .tile .ic { width: 30px; height: 30px; font-size: 16px; }
+  .grid.sq.tiny .tile .nm { font-size: 13px; -webkit-line-clamp: 1; white-space: nowrap; display: block; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .grid.sq.tiny .tile .tx { width: 100%; }
+  .grid.sq.tiny .tile .st { font-size: 11px; }
 
   .tile.on { background: var(--on-bg); color: var(--on-text); }
   .tile.on .ic { background: var(--yellow); color: #fff; }
@@ -665,9 +672,12 @@ Luce | lampadina | interruttore`;
       const h = g.clientHeight;
       if (g.classList.contains('sq')) {
         // quadrati: quante righe entrano (min 100px) e lato = altezza riga
-        const rows = Math.max(1, Math.floor((h + 10) / 110));
-        const side = Math.max(100, Math.min(150, Math.floor((h - 10 * (rows - 1)) / rows)));
-        g.style.setProperty('--rows', rows); g.style.setProperty('--rowh', side + 'px'); g.style.setProperty('--sqw', side + 'px');
+        // preferisco quadrati grandi (~120px); se non entrano almeno 2 righe, li rimpicciolisco invece di metterli in fila
+        let rows = Math.max(1, Math.floor((h + 10) / 120));
+        if (rows < 2 && h >= 2 * 70 + 8) rows = 2;
+        const side = Math.max(70, Math.min(150, Math.floor((h - 8 * (rows - 1)) / rows)));
+        g.classList.toggle('tiny', side < 100);
+        g.style.setProperty('--rows', rows); g.style.setProperty('--rowh', side + 'px'); g.style.setProperty('--sqw', (side < 100 ? Math.max(118, Math.round(side * 1.45)) : side) + 'px'); // se bassi, un po' più larghi per leggere i nomi
         return;
       }
       let rows = Math.max(1, Math.floor((h + 10) / 66));
@@ -682,7 +692,7 @@ Luce | lampadina | interruttore`;
       });
     });
   }
-  window.addEventListener('resize', () => requestAnimationFrame(layoutGrids));
+  window.addEventListener('resize', () => { requestAnimationFrame(layoutGrids); setTimeout(layoutGrids, 300); setTimeout(layoutGrids, 800); });
   window.addEventListener('orientationchange', () => setTimeout(layoutGrids, 300));
 
   function stateText(it) {
@@ -852,12 +862,15 @@ Luce | lampadina | interruttore`;
   }
   function askPin(title, cb) {
     if (!pin && !faceId) return cb();
+    if (isFullscreen()) exitFullscreen();
     pinCb = cb;
     if (faceId && faceSupported()) {
-      // chiamata subito, dentro il tocco, come richiede Safari
+      // il tastierino è già aperto sotto: se il Face ID non c'è o si annulla, si digita il codice
+      openPinPad(title);
+      $('pinSub').textContent = pin ? 'Face ID oppure codice' : 'Face ID';
       faceCheck().then(ok => {
         if (ok) { const c = pinCb; closePin(); fails = 0; c && c(); }
-        else { openPinPad(title); $('pinSub').textContent = pin ? 'Face ID non riuscito: usa il codice' : 'Face ID non riuscito'; }
+        else $('pinSub').textContent = pin ? 'Inserisci il codice' : 'Face ID non riuscito: imposta anche un codice in ⚙︎';
       });
       return;
     }
@@ -1047,6 +1060,13 @@ Luce | lampadina | interruttore`;
   document.addEventListener('touchmove', e => {
     if (isFullscreen() && !e.target.closest('.pages, nav, .sheet')) e.preventDefault();
   }, { passive: false });
+  document.addEventListener('focusin', e => {
+    if (!isFullscreen()) return;
+    const t = e.target;
+    if (t && t !== document.body && t.blur) t.blur();
+  });
+  // i pulsanti non prendono il focus al tocco (il clic funziona lo stesso)
+  document.addEventListener('mousedown', e => { if (isFullscreen() && e.target.closest('button')) e.preventDefault(); }, true);
   const markFs = () => {
     document.body.classList.toggle('fs', isFullscreen());
     setTimeout(layoutGrids, 250);
@@ -1075,6 +1095,7 @@ Luce | lampadina | interruttore`;
     c.addEventListener('contextmenu', e => e.preventDefault());
   })();
   $('btnSettings').addEventListener('click', () => askPin('Codice per le impostazioni', () => {
+    if (isFullscreen()) exitFullscreen();
     $('cfg').value = config; $('city').value = place ? place.name : '';
     $('optReturn').checked = opts.autoReturn; $('optDim').checked = opts.autoDim;
     $('newPin').value = ''; showFaceState();
