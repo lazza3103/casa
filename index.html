@@ -98,6 +98,12 @@
     background: rgba(255,149,0,.2); border: 1px solid rgba(255,149,0,.5); color: #ffcc80;
   }
   .chip svg { font-size: 15px; }
+  .chip.room b { font-weight: 700; color: var(--text); }
+  .chip.room span { color: var(--muted); font-weight: 600; }
+  .alerts .refreshhint { margin: 0; flex: none; }
+  .chip.green { background: rgba(48,209,88,.18); border-color: rgba(48,209,88,.5); color: #a5f0b8; }
+  .chip.grey { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.18); color: var(--text); }
+  .chip.red { background: rgba(255,69,58,.25); border-color: rgba(255,69,58,.6); color: #ffb4ae; }
   .group { flex: none; display: flex; flex-direction: column; min-height: 0; scroll-snap-align: start; }
   .title { font-size: 32px; font-weight: 700; letter-spacing: -.5px; margin: 4px 2px 6px; }
   .group h3 { font-size: 19px; font-weight: 700; margin: 8px 2px 10px; white-space: nowrap; }
@@ -419,7 +425,7 @@ Luce | lampadina | interruttore`;
       group.items.push({
         name: p[0], icon: (p[1] || 'presa').toLowerCase(),
         toggle: flags.includes('interr'), big: flags.includes('grande'), code: flags.includes('codice'), input: /\binput\b/.test(flags),
-        sensor: flags.includes('sensore'),
+        sensor: flags.includes('sensore'), hidden: flags.includes('nascosto'),
         shortcut: p[3] || p[0],
         scene: !flags.includes('sensore') && (/scen/i.test(group.name) || !flags.includes('interr') && !['robot', 'base'].includes((p[1] || '').toLowerCase()) && !flags.includes('azione'))
       });
@@ -434,9 +440,9 @@ Luce | lampadina | interruttore`;
       if (/^(casa|scene|sicurezza|pulizia)$/i.test(pg.name)) continue;
       const items = pg.groups.flatMap(g => g.items).filter(it => icons.includes(it.icon) && !seen.has(it.shortcut));
       items.forEach(it => seen.add(it.shortcut));
-      const sens = items.filter(it => it.sensor), ctrl = items.filter(it => !it.sensor);
-      if (sens.length) groups.push({ name: pg.name, items: sens.map(it => ({ ...it, big: false })) });
-      if (ctrl.length) groups.push({ name: sens.length ? `${pg.name} · comandi` : pg.name, items: ctrl.map(it => ({ ...it, big: false })) });
+      // i sensori (temperatura/umidità) vanno nel riepilogo in alto, qui solo i comandi
+      const ctrl = items.filter(it => !it.sensor);
+      if (ctrl.length) groups.push({ name: pg.name, items: ctrl.map(it => ({ ...it, big: false })) });
     }
     return { name: title, groups, auto: true };
   }
@@ -491,8 +497,11 @@ Luce | lampadina | interruttore`;
     $('title').textContent = page ? page.name : '';
     renderAlerts(page, list);
     if (!page) { main.appendChild(el('div', 'empty', 'Nessuna pagina: apri le impostazioni ⚙︎ per aggiungerne.')); return; }
-    for (const g of page.groups) {
+    for (const g0 of page.groups) {
+      const g = { ...g0, items: g0.items.filter(i => !i.hidden) };
       if (!g.items.length) continue;
+      // in una stanza con comandi, i sensori stanno solo nel riepilogo in alto; se la stanza ha solo sensori restano anche come riquadri
+      if (isRoomPage(page) && g.items.every(i => i.sensor) && page.groups.some(x => x.items.some(i => !i.sensor && !i.hidden))) continue;
       const sec = el('section', 'group');
       const onlySensors = g.items.every(i => i.sensor);
       if (onlySensors) {
@@ -541,10 +550,70 @@ Luce | lampadina | interruttore`;
   setInterval(updateRefreshHints, 15000);
 
   // Sulla pagina Casa: una riga di avvisi con finestre/porte aperte (solo se ce ne sono)
+  function isRoomPage(page) { return !!page && !page.auto && !/^(casa|scene|sicurezza|pulizia|stanze)$/i.test(page.name); }
+
   function renderAlerts(page, list) {
     const box = $('alerts');
     box.textContent = '';
-    if (!page || !/^casa$/i.test(page.name)) { box.hidden = true; return; }
+    if (isRoomPage(page)) {
+      // come in Casa di Apple: temperatura, umidità e sensori in alto
+      const its = page.groups.flatMap(g => g.items).filter(i => i.sensor && !i.hidden);
+      if (!its.length) { box.hidden = true; return; }
+      const h = el('button', 'refreshhint');
+      h.dataset.stale = its.some(i => ['porta', 'finestra', 'movimento'].includes(i.icon)) ? 1 : 10;
+      h.addEventListener('click', refreshNow);
+      box.appendChild(h);
+      for (const it of its) {
+        const info = sensorInfo(it), known = !/↻/.test(info.text);
+        const c = el('button', 'chip ' + (info.alert ? '' : 'grey'));
+        c.innerHTML = svg(it.icon);
+        if (['termometro', 'goccia'].includes(it.icon)) c.appendChild(el('span', null, known ? info.text : '—'));
+        else c.appendChild(el('span', null, `${it.name} · ${known ? info.text.toLowerCase() : '—'}`));
+        c.addEventListener('click', refreshNow);
+        box.appendChild(c);
+      }
+      box.hidden = false;
+      updateRefreshHints();
+      return;
+    }
+    if (page && /^clima$/i.test(page.name)) {
+      // una pillola per stanza: "Soggiorno 19,9° · 60%"
+      const rooms = parse(config).filter(pg => !/^(casa|scene|sicurezza|pulizia)$/i.test(pg.name));
+      let n = 0;
+      for (const pg of rooms) {
+        const its = pg.groups.flatMap(g => g.items).filter(i => i.sensor);
+        const t = its.find(i => i.icon === 'termometro'), u = its.find(i => i.icon === 'goccia');
+        if (!t && !u) continue;
+        const parts = [t, u].filter(Boolean).map(i => sensorInfo(i).text).filter(x => !/↻/.test(x));
+        const c = el('button', 'chip grey room');
+        c.innerHTML = svg('termometro');
+        c.appendChild(el('b', null, pg.name));
+        c.appendChild(el('span', null, parts.length ? parts.join(' · ') : '—'));
+        c.addEventListener('click', refreshNow);
+        box.appendChild(c); n++;
+      }
+      if (n) {
+        const h = el('button', 'refreshhint'); h.dataset.stale = 10; h.addEventListener('click', refreshNow);
+        box.prepend(h); // il promemoria per primo, sempre visibile
+      }
+      box.hidden = !n;
+      updateRefreshHints();
+      return;
+    }
+    if (!page || !/^(casa|sicurezza)$/i.test(page.name)) { box.hidden = true; return; }
+    const onSic = /^sicurezza$/i.test(page.name);
+    const all = list.flatMap(pg => pg.groups.flatMap(g => g.items));
+    const alarm = all.find(it => it.sensor && it.icon === 'allarme');
+    let shown = 0;
+    if (alarm) {
+      const info = sensorInfo(alarm);
+      const known = !/↻/.test(info.text);
+      const c = el('button', 'chip ' + (info.alert ? 'red' : info.armed ? 'green' : 'grey'));
+      c.innerHTML = svg('allarme');
+      c.appendChild(el('span', null, known ? `Allarme · ${info.text.toLowerCase()}` : 'Allarme · tocca per leggere'));
+      c.addEventListener('click', refreshNow);
+      box.appendChild(c); shown++;
+    }
     const seen = new Map();
     for (const pg of list) for (const g of pg.groups) for (const it of g.items) {
       if (!it.sensor || !['finestra', 'porta', 'movimento'].includes(it.icon)) continue;
@@ -552,13 +621,17 @@ Luce | lampadina | interruttore`;
       if (!seen.has(k) || it.name.length > seen.get(k).name.length) seen.set(k, it); // nome più completo
     }
     const open = [...seen.values()].filter(it => sensorInfo(it).alert);
-    box.hidden = open.length === 0;
-    const sic = list.find(p => /^sicurezza$/i.test(p.name));
+    if (onSic && alarm && !open.length) {
+      const c = el('button', 'chip grey'); c.innerHTML = svg('finestra');
+      c.appendChild(el('span', null, 'Porte e finestre chiuse')); box.appendChild(c);
+    }
+    box.hidden = shown + open.length === 0 && !onSic;
+    const sic = onSic ? null : list.find(p => /^sicurezza$/i.test(p.name));
     open.forEach(it => {
       const c = el('button', 'chip');
       c.innerHTML = svg(it.icon);
       c.appendChild(el('span', null, `${it.name} · ${sensorInfo(it).text.toLowerCase()}`));
-      if (sic) c.addEventListener('click', () => { current = sic.name; store.set('casa.page', current); render(); $('pages').scrollLeft = 0; });
+      c.addEventListener('click', sic ? () => { current = sic.name; store.set('casa.page', current); render(); $('pages').scrollLeft = 0; } : refreshNow);
       box.appendChild(c);
     });
   }
