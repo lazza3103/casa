@@ -23,6 +23,12 @@
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   [hidden] { display: none !important; }
+  html, body { overscroll-behavior: none; }
+  .main, nav { overscroll-behavior: contain; }
+  .main::before, nav::before { content: ''; display: block; height: 1px; }
+  /* A tutto schermo: "cuscinetto" invisibile sopra il contenuto che assorbe gli scorrimenti verso il basso */
+  body.fs .main::before, body.fs nav::before { height: 160px; }
+  body.fs .main::after, body.fs nav::after { content: ''; display: block; height: 160px; }
   html, body { margin: 0; height: 100%; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
@@ -401,7 +407,7 @@ Luce | lampadina | interruttore`;
       const b = el('button', 'navitem' + (p.name === current ? ' active' : ''));
       b.innerHTML = svg(navIcon(p.name, isRoom));
       b.appendChild(el('span', null, p.name));
-      b.addEventListener('click', () => { current = p.name; store.set('casa.page', current); render(); $('main').scrollTop = 0; });
+      b.addEventListener('click', () => { current = p.name; store.set('casa.page', current); render(); $('main').scrollTop = isFullscreen() ? BUFFER : 0; });
       nav.appendChild(b);
     };
     top.forEach(p => addNav(p, false));
@@ -717,7 +723,31 @@ Luce | lampadina | interruttore`;
     if (e.target.closest('.tile, #btnRefresh, .sheet-bg, .pin-bg')) return;
     goFullscreen();
   }, true);
-  const markFs = () => document.body.classList.toggle('fs', isFullscreen());
+  // A tutto schermo tengo le aree scorrevoli sempre "un pixel sotto la cima",
+  // così uno scorrimento verso il basso muove la pagina invece di chiudere il tutto schermo.
+  const BUFFER = 160; // px di margine, come il "tira per aggiornare"
+  function keepOffTop(el) {
+    if (!el) return;
+    let t, touching = false;
+    const settle = () => {
+      if (!isFullscreen() || touching) return;
+      const max = el.scrollHeight - el.clientHeight;
+      if (el.scrollTop < BUFFER) el.scrollTo({ top: BUFFER, behavior: 'smooth' });
+      else if (el.scrollTop > max - BUFFER) el.scrollTo({ top: Math.max(BUFFER, max - BUFFER), behavior: 'smooth' });
+    };
+    el.addEventListener('touchstart', () => { touching = true; clearTimeout(t); }, { passive: true });
+    el.addEventListener('touchend', () => { touching = false; clearTimeout(t); t = setTimeout(settle, 120); }, { passive: true });
+    el.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(settle, 160); }, { passive: true });
+  }
+  keepOffTop($('main')); keepOffTop($('nav'));
+  // Le zone fisse (orologio, sfondo) non devono trascinare la pagina
+  document.addEventListener('touchmove', e => {
+    if (isFullscreen() && !e.target.closest('.main, nav, .sheet')) e.preventDefault();
+  }, { passive: false });
+  const markFs = () => {
+    document.body.classList.toggle('fs', isFullscreen());
+    [$('main'), $('nav')].forEach(el => { if (isFullscreen()) { if (el.scrollTop < BUFFER) el.scrollTop = BUFFER; } else if (el.scrollTop <= BUFFER) el.scrollTop = 0; });
+  };
   document.addEventListener('fullscreenchange', markFs);
   document.addEventListener('webkitfullscreenchange', markFs);
 
