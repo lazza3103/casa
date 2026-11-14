@@ -689,6 +689,20 @@ Luce | lampadina | interruttore`;
   $('dim').addEventListener('click', e => { e.stopPropagation(); setDim(false); resetIdle(); });
   ['pointerdown', 'touchstart'].forEach(ev => document.addEventListener(ev, resetIdle, { passive: true }));
 
+  // Tutto schermo: funziona se il browser lo permette (su iPhone serve la flag
+  // "Fullscreen API" in Impostazioni → Safari → Avanzate → Funzionalità). Altrimenti non fa nulla.
+  function goFullscreen() {
+    const d = document, el = d.documentElement;
+    const enabled = d.fullscreenEnabled || d.webkitFullscreenEnabled;
+    const active = d.fullscreenElement || d.webkitFullscreenElement;
+    if (!enabled || active) return;
+    try {
+      const r = el.requestFullscreen ? el.requestFullscreen({ navigationUI: 'hide' }) : el.webkitRequestFullscreen && el.webkitRequestFullscreen();
+      if (r && r.catch) r.catch(() => {});
+    } catch {}
+  }
+  document.addEventListener('click', goFullscreen, true);
+
   // ================= Impostazioni =================
   const sideBtns = el('div', 'sidebtns');
   sideBtns.innerHTML = '<button class="roundbtn" id="btnRefresh" aria-label="Aggiorna stati"></button><button class="roundbtn" id="btnSettings" aria-label="Impostazioni"></button><button class="roundbtn" id="btnDim" aria-label="Schermo a riposo"></button>';
