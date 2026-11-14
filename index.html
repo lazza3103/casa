@@ -269,7 +269,7 @@
       <span class="hint" id="faceState"></span>
     </div>
     <label class="check"><input type="checkbox" id="optReturn"> Torna alla dashboard dopo il comando</label>
-    <label class="check"><input type="checkbox" id="optDim"> Schermo a riposo dopo 2 minuti</label>
+    <label class="check"><input type="checkbox" id="optDim"> Screensaver dopo 15 secondi (toccandolo si torna a tutto schermo)</label>
     <div class="row">
       <button class="btn" id="btnReset">Ripristina la mia casa</button>
       <button class="btn" id="btnClearStates">Azzera acceso/spento</button>
@@ -509,10 +509,10 @@ Luce | lampadina | interruttore`;
       url = `shortcuts://x-callback-url/run-shortcut?name=${name}${inp}&x-success=${back}&x-error=${err}&x-cancel=${err}`;
     }
     setTimeout(render, 350);
-    // Resto a tutto schermo. Se non lo sono, questo stesso tocco ci rientra
-    // e apro Comandi poco dopo, così le due cose non si sovrappongono.
-    if (isFullscreen() || !(document.fullscreenEnabled || document.webkitFullscreenEnabled)) location.href = url;
-    else { goFullscreen(); setTimeout(() => { location.href = url; }, 550); }
+    // Per sicurezza tutto schermo e Comandi non si toccano nello stesso momento:
+    // se sono a tutto schermo esco, poi apro Comandi. Si rientra toccando lo screensaver.
+    if (isFullscreen()) { exitFullscreen(); setTimeout(() => { location.href = url; }, 400); }
+    else location.href = url;
   }
 
   let toastTimer;
@@ -725,8 +725,8 @@ Luce | lampadina | interruttore`;
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { keepAwake(); loadWeather(); render(); } });
   let idleTimer;
   const setDim = on => $('dim').classList.toggle('active', on);
-  function resetIdle() { clearTimeout(idleTimer); if (opts.autoDim) idleTimer = setTimeout(() => setDim(true), 120000); }
-  $('dim').addEventListener('click', e => { e.stopPropagation(); setDim(false); resetIdle(); });
+  function resetIdle() { clearTimeout(idleTimer); if (opts.autoDim) idleTimer = setTimeout(() => setDim(true), 15000); }
+  $('dim').addEventListener('click', e => { e.stopPropagation(); setDim(false); resetIdle(); goFullscreen(); });
   ['pointerdown', 'touchstart'].forEach(ev => document.addEventListener(ev, resetIdle, { passive: true }));
 
   // Tutto schermo: funziona se il browser lo permette (su iPhone serve la flag
