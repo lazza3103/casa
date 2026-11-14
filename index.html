@@ -146,7 +146,7 @@
   .sheet-bg.open { display: block; }
   .sheet {
     position: absolute; inset: 4% 5%; border-radius: 24px; padding: 18px 20px;
-    background: rgba(28,28,30,.97); display: flex; flex-direction: column; gap: 10px; overflow-y: auto;
+    background: rgba(28,28,30,.97); display: flex; flex-direction: column; gap: 10px; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
     -webkit-user-select: text; user-select: text;
   }
   .sheet h4 { margin: 0; font-size: 22px; }
@@ -155,7 +155,7 @@
     width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,.12); background: #111; color: var(--text);
     padding: 10px 12px; font-size: 14px; font-family: ui-monospace, Menlo, monospace;
   }
-  .sheet textarea { min-height: 300px; line-height: 1.45; }
+  .sheet textarea { min-height: 300px; line-height: 1.45; flex: none; }
   .hint { font-size: 13px; color: var(--muted); line-height: 1.5; }
   .hint code { color: #fff; }
   .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
@@ -213,7 +213,10 @@
   <div class="sheet">
     <div class="row" style="justify-content:space-between">
       <h4>Impostazioni</h4>
-      <button class="btn" id="btnClose">Chiudi</button>
+      <div class="row">
+        <button class="btn" id="btnClose">Chiudi</button>
+        <button class="btn primary" id="btnSave">Salva</button>
+      </div>
     </div>
     <label for="cfg">Pagine e pulsanti</label>
     <textarea id="cfg" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
@@ -245,7 +248,6 @@
     <label class="check"><input type="checkbox" id="optReturn"> Torna alla dashboard dopo il comando</label>
     <label class="check"><input type="checkbox" id="optDim"> Schermo a riposo dopo 2 minuti</label>
     <div class="row">
-      <button class="btn primary" id="btnSave">Salva</button>
       <button class="btn" id="btnReset">Ripristina la mia casa</button>
       <button class="btn" id="btnClearStates">Azzera acceso/spento</button>
     </div>
@@ -282,6 +284,7 @@
     allarme: '<path d="M7 18v-6a5 5 0 0 1 10 0v6M4 18h16v3H4zM12 2.5v1.5M4.5 6l1 1M19.5 6l-1 1"/>',
     wifi: '<path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M12 19.5h.01"/>',
     lucchetto: '<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/>',
+    aggiorna: '<path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v4.5h-4.5"/>',
     luna: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
     // navigazione
     casa: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
@@ -293,7 +296,7 @@
   const svg = name => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ICONS.presa}</svg>`;
   const LIGHT_ICONS = ['lampadina', 'lampada', 'plafoniera', 'led'];
   const CLIMA_ICONS = ['fiamma', 'fiocco', 'goccia', 'termometro', 'tenda'];
-  const PICKABLE = Object.keys(ICONS).filter(k => !['casa', 'scene', 'clima', 'stanza', 'ingranaggio', 'lucchetto'].includes(k));
+  const PICKABLE = Object.keys(ICONS).filter(k => !['casa', 'scene', 'clima', 'stanza', 'ingranaggio', 'lucchetto', 'aggiorna'].includes(k));
 
   // ================= La tua casa =================
   const DEFAULT_CONFIG = `= Casa
@@ -454,11 +457,11 @@ Luce | lampadina | interruttore`;
   const baseUrl = () => location.origin + location.pathname;
   function run(it, btn) {
     if (it.toggle) { states[it.shortcut] = !states[it.shortcut]; store.set('casa.states.v2', states); }
-    btn.classList.add('flash');
+    if (btn) btn.classList.add('flash');
     const name = encodeURIComponent(it.shortcut);
     let url = `shortcuts://run-shortcut?name=${name}`;
     if (opts.autoReturn && /^https?:$/.test(location.protocol)) {
-      const back = encodeURIComponent(baseUrl() + '?ok=' + encodeURIComponent(it.name));
+      const back = encodeURIComponent(baseUrl() + '?ok=' + encodeURIComponent(it.name) + '&s=' + encodeURIComponent(it.shortcut));
       const err = encodeURIComponent(baseUrl() + '?err=' + encodeURIComponent(it.shortcut));
       url = `shortcuts://x-callback-url/run-shortcut?name=${name}&x-success=${back}&x-error=${err}&x-cancel=${err}`;
     }
@@ -570,7 +573,7 @@ Luce | lampadina | interruttore`;
   }));
 
   // Configurazione personale passata nel link (#config=...): resta solo su questo telefono
-  (function importFromLink() {
+  function importFromLink() {
     const m = location.hash.match(/^#config=(.+)$/);
     if (!m) return;
     history.replaceState(null, '', baseUrl());
@@ -584,17 +587,61 @@ Luce | lampadina | interruttore`;
       render(); toast('Configurazione importata');
     };
     setTimeout(() => askPin('Codice per importare la configurazione', apply), 300);
-  })();
+  }
+  importFromLink();
+  window.addEventListener('hashchange', importFromLink);
+
+  // ---- Stato reale dai comandi rapidi ----
+  // Il comando rapido può restituire (Interrompi e restituisci):
+  //  - un solo valore (es. "Sì", "1", "Acceso") → stato del pulsante appena premuto
+  //  - più righe "Nome=valore" → stato di più accessori (comando "Aggiorna dashboard")
+  const ON_WORDS = ['1', 'true', 'sì', 'si', 'yes', 'on', 'acceso', 'accesa', 'accesi', 'attivo', 'attiva', 'aperto', 'aperta'];
+  const OFF_WORDS = ['0', 'false', 'no', 'off', 'spento', 'spenta', 'spenti', 'disattivo', 'disattiva', 'chiuso', 'chiusa'];
+  function readBool(v) {
+    v = String(v || '').trim().toLowerCase().replace(/[.!]$/, '');
+    if (ON_WORDS.includes(v)) return true;
+    if (OFF_WORDS.includes(v)) return false;
+    const n = parseFloat(v.replace(',', '.'));
+    if (!isNaN(n)) return n > 0; // es. luminosità 0–100
+    return null;
+  }
+  function applyResult(result, shortcut) {
+    if (result == null || result === '') return 0;
+    const items = parse(config).flatMap(p => p.groups.flatMap(g => g.items)).filter(i => i.toggle);
+    let n = 0;
+    if (/[=:]/.test(result)) {
+      for (const part of result.split(/[\n;,]+/)) {
+        const m = part.match(/^\s*(.+?)\s*[=:]\s*(.+?)\s*$/);
+        if (!m) continue;
+        const key = m[1].toLowerCase(), val = readBool(m[2]);
+        if (val === null) continue;
+        items.filter(i => i.name.toLowerCase() === key || i.shortcut.toLowerCase() === key)
+             .forEach(i => { states[i.shortcut] = val; n++; });
+      }
+    } else if (shortcut) {
+      const val = readBool(result);
+      if (val !== null) { states[shortcut] = val; n++; }
+    }
+    if (n) store.set('casa.states.v2', states);
+    return n;
+  }
 
   (function handleReturn() {
     const q = new URLSearchParams(location.search);
+    let sc = q.get('s'), result = q.get('result');
+    // nel caso Comandi aggiunga "?result=" invece di "&result="
+    if (result === null && sc && sc.includes('?result=')) {
+      const i = sc.indexOf('?result=');
+      result = decodeURIComponent(sc.slice(i + 8).replace(/\+/g, ' ')); sc = sc.slice(0, i);
+    }
+    if (result !== null) applyResult(result, sc);
     if (q.has('ok')) setTimeout(() => toast('✓ ' + q.get('ok')), 300);
     if (q.has('err')) {
       const sc = q.get('err');
       if (sc in states) { states[sc] = !states[sc]; store.set('casa.states.v2', states); }
       setTimeout(() => toast('Comando non riuscito: ' + sc), 300);
     }
-    if (q.has('ok') || q.has('err')) history.replaceState(null, '', baseUrl());
+    if (q.has('ok') || q.has('err') || q.has('result')) history.replaceState(null, '', baseUrl());
   })();
 
   // ================= Orologio e meteo =================
@@ -638,10 +685,12 @@ Luce | lampadina | interruttore`;
 
   // ================= Impostazioni =================
   const sideBtns = el('div', 'sidebtns');
-  sideBtns.innerHTML = '<button class="roundbtn" id="btnSettings" aria-label="Impostazioni"></button><button class="roundbtn" id="btnDim" aria-label="Schermo a riposo"></button>';
+  sideBtns.innerHTML = '<button class="roundbtn" id="btnRefresh" aria-label="Aggiorna stati"></button><button class="roundbtn" id="btnSettings" aria-label="Impostazioni"></button><button class="roundbtn" id="btnDim" aria-label="Schermo a riposo"></button>';
   document.body.appendChild(sideBtns);
   $('btnSettings').innerHTML = svg('ingranaggio');
   $('btnDim').innerHTML = svg('luna');
+  $('btnRefresh').innerHTML = svg('aggiorna');
+  $('btnRefresh').addEventListener('click', () => run({ name: 'Stati aggiornati', shortcut: 'Aggiorna dashboard', toggle: false }, null));
   $('btnDim').addEventListener('click', () => setDim(true));
   $('iconList').innerHTML = PICKABLE.map(k => `<span>${svg(k)}${k}</span>`).join('');
   $('btnSettings').addEventListener('click', () => askPin('Codice per le impostazioni', () => {
