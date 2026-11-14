@@ -125,6 +125,15 @@
   .tile.action:active .ic, .tile.action.flash .ic { background: var(--accent); color: #fff; box-shadow: 0 0 0 6px rgba(255,179,64,.25); }
   .tile.action.flash { background: var(--tile); color: var(--text); }
   .tile.scene .nm { font-size: 16px; }
+  /* Sensori: sola lettura; arancione se finestra/porta aperta o movimento, verde-azzurro se allarme inserito */
+  .tile.sensor .ic { background: rgba(255,255,255,.08); color: rgba(255,255,255,.75); }
+  .tile.sensor .st.val { font-size: 17px; font-weight: 700; color: var(--text); }
+  .tile.sensor.alert { background: rgba(255,149,0,.22); border-color: rgba(255,149,0,.55); }
+  .tile.sensor.alert .ic { background: #ff9500; color: #fff; }
+  .tile.sensor.alert .st { color: #ffcc80; font-weight: 600; }
+  .tile.sensor.armed { background: rgba(48,209,88,.16); border-color: rgba(48,209,88,.45); }
+  .tile.sensor.armed .ic { background: #30d158; color: #fff; }
+  .tile.sensor.armed .st { color: #a5f0b8; font-weight: 600; }
   .tile.flash { background: var(--on-bg); color: var(--on-text); }
   .tile.flash .ic { color: var(--accent); }
 
@@ -246,7 +255,7 @@
     <div class="hint">
       <code>= Stanza</code> crea una pagina · <code>## Titolo</code> crea un gruppo · ogni pulsante:
       <code>Nome | icona | opzioni | comando rapido</code><br>
-      Opzioni: <code>interruttore</code> (acceso/spento), <code>grande</code> (riquadro alto), <code>codice</code> (chiede il codice prima di eseguire), <code>input</code> (passa 1 = accendi o 0 = spegni al comando rapido). Se il comando rapido manca, si usa il Nome.
+      Opzioni: <code>interruttore</code> (acceso/spento), <code>sensore</code> (solo lettura, valore da “Aggiorna dashboard”), <code>grande</code> (riquadro alto), <code>codice</code> (chiede il codice prima di eseguire), <code>input</code> (passa 1 = accendi o 0 = spegni al comando rapido). Se il comando rapido manca, si usa il Nome.
       Le pagine <b>Luci</b> e <b>Clima</b> si compongono da sole in base alle icone.
     </div>
     <div class="icons" id="iconList"></div>
@@ -308,6 +317,10 @@
     wifi: '<path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M12 19.5h.01"/>',
     lucchetto: '<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/>',
     aggiorna: '<path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v4.5h-4.5"/>',
+    finestra: '<rect x="4.5" y="3" width="15" height="18" rx="2"/><path d="M12 3v18M4.5 12h15"/>',
+    porta: '<path d="M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17M3.5 21h17M14.5 12.5h.01"/>',
+    movimento: '<circle cx="13.5" cy="4.5" r="1.8"/><path d="M9 21l2.6-5.5L15 18v3M11.6 15.5l1.2-5.3 3.4 2.8H20M12.8 10.2 9 11l-2 3"/>',
+    scudo: '<path d="M12 3l7.5 3v5.5c0 4.7-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.8-7.5-9.5V6z"/>',
     luna: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
     // navigazione
     casa: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
@@ -319,7 +332,7 @@
   const svg = name => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ICONS.presa}</svg>`;
   const LIGHT_ICONS = ['lampadina', 'lampada', 'plafoniera', 'led'];
   const CLIMA_ICONS = ['fiamma', 'fiocco', 'goccia', 'termometro', 'tenda'];
-  const PICKABLE = Object.keys(ICONS).filter(k => !['casa', 'scene', 'clima', 'stanza', 'ingranaggio', 'lucchetto', 'aggiorna'].includes(k));
+  const PICKABLE = Object.keys(ICONS).filter(k => !['casa', 'scene', 'clima', 'stanza', 'ingranaggio', 'lucchetto', 'aggiorna', 'scudo'].includes(k));
 
   // ================= La tua casa =================
   const DEFAULT_CONFIG = `= Casa
@@ -351,6 +364,7 @@ Luce | lampadina | interruttore`;
   let config = store.get('casa.config.v2', DEFAULT_CONFIG);
   if (store.get('casa.edited', false) !== true) config = DEFAULT_CONFIG;
   let states = store.get('casa.states.v2', {});
+  let values = store.get('casa.values', {});
   let opts = store.get('casa.opts', { autoReturn: true, autoDim: true });
   let place = store.get('casa.place', null);
   let current = store.get('casa.page', 'Casa');
@@ -372,8 +386,9 @@ Luce | lampadina | interruttore`;
       group.items.push({
         name: p[0], icon: (p[1] || 'presa').toLowerCase(),
         toggle: flags.includes('interr'), big: flags.includes('grande'), code: flags.includes('codice'), input: /\binput\b/.test(flags),
+        sensor: flags.includes('sensore'),
         shortcut: p[3] || p[0],
-        scene: /scen/i.test(group.name) || !flags.includes('interr') && !['robot', 'base'].includes((p[1] || '').toLowerCase()) && !flags.includes('azione')
+        scene: !flags.includes('sensore') && (/scen/i.test(group.name) || !flags.includes('interr') && !['robot', 'base'].includes((p[1] || '').toLowerCase()) && !flags.includes('azione'))
       });
     }
     return pages;
@@ -383,7 +398,7 @@ Luce | lampadina | interruttore`;
   function categoryPage(pages, title, icons) {
     const groups = [], seen = new Set();
     for (const pg of pages) {
-      if (/^(casa|scene)$/i.test(pg.name)) continue;
+      if (/^(casa|scene|sicurezza)$/i.test(pg.name)) continue;
       const items = pg.groups.flatMap(g => g.items).filter(it => icons.includes(it.icon) && !seen.has(it.shortcut));
       items.forEach(it => seen.add(it.shortcut));
       if (items.length) groups.push({ name: pg.name, items: items.map(it => ({ ...it, big: false })) });
@@ -395,15 +410,15 @@ Luce | lampadina | interruttore`;
     const pages = parse(config);
     const luci = categoryPage(pages, 'Luci', LIGHT_ICONS);
     const clima = categoryPage(pages, 'Clima', CLIMA_ICONS);
-    const top = pages.filter(p => /^(casa|scene)$/i.test(p.name));
-    const rooms = pages.filter(p => !/^(casa|scene)$/i.test(p.name));
+    const top = pages.filter(p => /^(casa|scene|sicurezza)$/i.test(p.name));
+    const rooms = pages.filter(p => !/^(casa|scene|sicurezza)$/i.test(p.name));
     return { top: [...top, ...(luci.groups.length ? [luci] : []), ...(clima.groups.length ? [clima] : [])], rooms };
   }
 
   // ================= Disegno =================
   function navIcon(name, isRoom) {
     if (isRoom) return 'stanza';
-    return { casa: 'casa', scene: 'scene', luci: 'lampadina', clima: 'clima' }[name.toLowerCase()] || 'stanza';
+    return { casa: 'casa', scene: 'scene', sicurezza: 'scudo', luci: 'lampadina', clima: 'clima' }[name.toLowerCase()] || 'stanza';
   }
 
   function render() {
@@ -475,7 +490,50 @@ Luce | lampadina | interruttore`;
     return on ? 'Acceso' : 'Spento';
   }
 
+  // Sensori: solo lettura. Mostrano il valore restituito da "Aggiorna dashboard".
+  function sensorInfo(it) {
+    const raw = values[it.shortcut.toLowerCase()];
+    if (raw == null || raw === '') return { text: 'Tocca ↻ per leggere', alert: false };
+    const v = String(raw).trim().toLowerCase();
+    if (it.icon === 'finestra' || it.icon === 'porta') {
+      // HomeKit: contatto rilevato (0) = chiusa, non rilevato (1) = aperta
+      const open = /non rilevat|apert|open|^1$|^sì$|^si$|^true$/.test(v) ? true
+                 : /rilevat|chius|closed|^0$|^no$|^false$/.test(v) ? false : null;
+      if (open === null) return { text: raw, alert: false };
+      return { text: open ? (it.icon === 'porta' ? 'Aperta' : 'Aperta') : 'Chiusa', alert: open };
+    }
+    if (it.icon === 'termometro' || it.icon === 'goccia') {
+      const num = parseFloat(String(raw).replace(',', '.').replace(/[^0-9.\-]/g, ''));
+      if (isNaN(num)) return { text: raw, alert: false };
+      return it.icon === 'termometro'
+        ? { text: num.toLocaleString('it-IT', { maximumFractionDigits: 1 }) + '°', alert: false, big: true }
+        : { text: Math.round(num) + '%', alert: false, big: true };
+    }
+    if (it.icon === 'movimento') {
+      const det = /non rilevat|^0$|^no$|^false$/.test(v) ? false : /rilevat|^1$|^sì$|^si$|^true$/.test(v) ? true : null;
+      if (det === null) return { text: raw, alert: false };
+      return { text: det ? 'Movimento rilevato' : 'Nessun movimento', alert: det };
+    }
+    if (it.icon === 'allarme') {
+      const off = /disattiv|disarm|non attiv|^4$|^3$/.test(v) && !/scatt|trigger/.test(v);
+      const map = { '0': 'Casa', '1': 'Fuori casa', '2': 'Notte', '3': 'Disattivato', '4': 'Scattato!' };
+      const text = map[v] || raw.charAt(0).toUpperCase() + raw.slice(1);
+      return { text, alert: /scatt|trigger|^4$/.test(v), armed: !off };
+    }
+    return { text: raw, alert: false };
+  }
+
   function tile(it) {
+    if (it.sensor) {
+      const info = sensorInfo(it);
+      const b = el('button', 'tile sensor' + (it.big ? ' big' : '') + (info.alert ? ' alert' : '') + (info.armed ? ' armed' : ''));
+      const ic = el('span', 'ic'); ic.innerHTML = svg(it.icon);
+      const tx = el('span', 'tx');
+      tx.append(el('div', 'nm', it.name), el('div', 'st' + (info.big ? ' val' : ''), info.text));
+      b.append(ic, tx);
+      b.addEventListener('click', () => run({ name: 'Stati aggiornati', shortcut: 'Aggiorna dashboard', toggle: false }, null));
+      return b;
+    }
     const on = it.toggle && states[it.shortcut];
     const isScene = !it.toggle && it.scene;
     const isAction = !it.toggle && !isScene;
@@ -653,13 +711,21 @@ Luce | lampadina | interruttore`;
   }
   function applyResult(result, shortcut) {
     if (result == null || result === '') return 0;
-    const items = parse(config).flatMap(p => p.groups.flatMap(g => g.items)).filter(i => i.toggle);
+    const all = parse(config).flatMap(p => p.groups.flatMap(g => g.items));
+    const items = all.filter(i => i.toggle);
+    const sensorNames = new Set(all.filter(i => i.sensor).flatMap(i => [i.shortcut.toLowerCase(), i.name.toLowerCase()]));
     let n = 0;
     if (/[=:]/.test(result)) {
-      for (const part of result.split(/[\n;,]+/)) {
+      for (const part of result.split(/[\n;]+/)) { // niente virgola: serve ai decimali (20,5°)
         const m = part.match(/^\s*(.+?)\s*[=:]\s*(.+?)\s*$/);
         if (!m) continue;
-        const key = m[1].toLowerCase(), val = readBool(m[2]);
+        const key = m[1].toLowerCase();
+        if (sensorNames.has(key)) {
+          all.filter(i => i.sensor && (i.shortcut.toLowerCase() === key || i.name.toLowerCase() === key))
+             .forEach(i => { values[i.shortcut.toLowerCase()] = m[2]; });
+          n++; store.set('casa.values', values);
+        }
+        const val = readBool(m[2]);
         if (val === null) continue;
         items.filter(i => i.name.toLowerCase() === key || i.shortcut.toLowerCase() === key)
              .forEach(i => { states[i.shortcut] = val; n++; });
@@ -806,7 +872,7 @@ Luce | lampadina | interruttore`;
     render(); resetIdle(); $('sheetBg').classList.remove('open'); toast('Salvato');
   });
   $('btnReset').addEventListener('click', () => { $('cfg').value = DEFAULT_CONFIG; });
-  $('btnClearStates').addEventListener('click', () => { states = {}; store.set('casa.states.v2', states); render(); toast('Stati azzerati'); });
+  $('btnClearStates').addEventListener('click', () => { states = {}; values = {}; store.set('casa.states.v2', states); store.set('casa.values', values); render(); toast('Stati azzerati'); });
 
   // ================= Avvio =================
   render(); tick(); setInterval(tick, 1000);
