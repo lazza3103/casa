@@ -445,6 +445,11 @@ Luce | lampadina | interruttore`;
       const ctrl = items.filter(it => !it.sensor);
       if (ctrl.length) groups.push({ name: pg.name, items: ctrl.map(it => ({ ...it, big: false })) });
     }
+    // Clima: un solo gruppo per tutta la casa (i comandi agiscono su tutta la casa)
+    if (/^clima$/i.test(title)) {
+      const items = groups.flatMap(g => g.items);
+      return { name: title, groups: items.length ? [{ name: 'Clima', items }] : [], auto: true };
+    }
     return { name: title, groups, auto: true };
   }
 
@@ -454,7 +459,11 @@ Luce | lampadina | interruttore`;
     const clima = categoryPage(pages, 'Clima', CLIMA_ICONS);
     const top = pages.filter(p => /^(casa|scene|sicurezza|pulizia)$/i.test(p.name));
     const rooms = pages.filter(p => !/^(casa|scene|sicurezza|pulizia)$/i.test(p.name));
-    return { top: [...top, ...(luci.groups.length ? [luci] : []), ...(clima.groups.length ? [clima] : [])], rooms };
+    // ordine fisso della barra laterale
+    const ORDER = ['casa', 'sicurezza', 'clima', 'luci', 'pulizia', 'scene'];
+    const all = [...top, ...(luci.groups.length ? [luci] : []), ...(clima.groups.length ? [clima] : [])];
+    const pos = p => { const i = ORDER.indexOf(p.name.toLowerCase()); return i < 0 ? 99 : i; };
+    return { top: all.sort((a, b) => pos(a) - pos(b)), rooms };
   }
 
   // ================= Disegno =================
@@ -502,7 +511,7 @@ Luce | lampadina | interruttore`;
       const g = { ...g0, items: g0.items.filter(i => !i.hidden) };
       if (!g.items.length) continue;
       // in una stanza con comandi, i sensori stanno solo nel riepilogo in alto; se la stanza ha solo sensori restano anche come riquadri
-      if (isRoomPage(page) && g.items.every(i => i.sensor) && page.groups.some(x => x.items.some(i => !i.sensor && !i.hidden))) continue;
+      if (isRoomPage(page) && g.items.every(i => i.sensor)) continue; // i sensori stanno nel riepilogo in alto
       const sec = el('section', 'group');
       const onlySensors = g.items.every(i => i.sensor);
       if (onlySensors) {
@@ -522,6 +531,7 @@ Luce | lampadina | interruttore`;
       sec.appendChild(grid);
       main.appendChild(sec);
     }
+    if (!main.children.length && isRoomPage(page)) main.appendChild(el('div', 'empty', 'Nessun comando in questa stanza: i sensori sono nel riepilogo in alto.'));
     updateRefreshHints();
     layoutGrids();
   }
