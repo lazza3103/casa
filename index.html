@@ -87,6 +87,15 @@
     padding-right: 28px;
   }
   .pages::-webkit-scrollbar { display: none; }
+  /* Avvisi piccoli in cima alla pagina Casa (finestre/porte aperte) */
+  .alerts { display: flex; gap: 8px; flex: none; overflow-x: auto; scrollbar-width: none; padding: 2px 2px 8px; }
+  .alerts::-webkit-scrollbar { display: none; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; flex: none; white-space: nowrap; cursor: pointer;
+    padding: 5px 11px 5px 8px; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600;
+    background: rgba(255,149,0,.2); border: 1px solid rgba(255,149,0,.5); color: #ffcc80;
+  }
+  .chip svg { font-size: 15px; }
   .group { flex: none; display: flex; flex-direction: column; min-height: 0; scroll-snap-align: start; }
   .title { font-size: 32px; font-weight: 700; letter-spacing: -.5px; margin: 4px 2px 6px; }
   .group h3 { font-size: 19px; font-weight: 700; margin: 8px 2px 10px; white-space: nowrap; }
@@ -94,7 +103,7 @@
   .grid {
     flex: 1; min-height: 0; display: grid; gap: 10px;
     grid-auto-flow: column dense; grid-auto-columns: var(--colw, 220px);
-    grid-template-rows: repeat(var(--rows, 3), 66px); align-content: start;
+    grid-template-rows: repeat(var(--rows, 3), var(--rowh, 66px)); align-content: start;
   }
   .tile {
     position: relative; display: flex; align-items: center; gap: 11px;
@@ -128,6 +137,21 @@
   /* Sensori: sola lettura; arancione se finestra/porta aperta o movimento, verde-azzurro se allarme inserito */
   .tile.sensor .ic { background: rgba(255,255,255,.08); color: rgba(255,255,255,.75); }
   .tile.sensor .st.val { font-size: 17px; font-weight: 700; color: var(--text); }
+  .tile.roomtile .ic { color: var(--accent); }
+  /* Gruppi di soli sensori: riquadrati, con promemoria di aggiornamento */
+  .group.framed { border: 1px solid rgba(255,255,255,.14); border-radius: 24px; padding: 4px 12px 12px; background: rgba(255,255,255,.03); }
+  .grouphead { display: flex; align-items: center; gap: 10px; flex: none; }
+  .grouphead h3 { margin: 8px 2px 10px; }
+  .refreshhint {
+    margin: 8px 0 10px auto; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; cursor: pointer;
+    font: inherit; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.14); color: var(--muted);
+  }
+  .refreshhint svg { font-size: 13px; }
+  .refreshhint.stale { background: rgba(255,149,0,.2); border-color: rgba(255,149,0,.55); color: #ffcc80; }
+  .tile.roomtile .st { font-size: 15px; font-weight: 600; color: var(--text); opacity: .8; }
+  .tile.roomtile.alert { border-color: rgba(255,149,0,.55); }
+  .tile.roomtile.alert .st { color: #ffcc80; opacity: 1; }
   .tile.sensor.alert { background: rgba(255,149,0,.22); border-color: rgba(255,149,0,.55); }
   .tile.sensor.alert .ic { background: #ff9500; color: #fff; }
   .tile.sensor.alert .st { color: #ffcc80; font-weight: 600; }
@@ -221,6 +245,7 @@
         <div class="clocksub"><span class="date" id="date"></span><span id="wx"></span></div>
       </div>
     </div>
+    <div class="alerts" id="alerts" hidden></div>
     <div class="pages" id="pages"></div>
   </main>
 </div>
@@ -398,7 +423,7 @@ Luce | lampadina | interruttore`;
   function categoryPage(pages, title, icons) {
     const groups = [], seen = new Set();
     for (const pg of pages) {
-      if (/^(casa|scene|sicurezza)$/i.test(pg.name)) continue;
+      if (/^(casa|scene|sicurezza|pulizia)$/i.test(pg.name)) continue;
       const items = pg.groups.flatMap(g => g.items).filter(it => icons.includes(it.icon) && !seen.has(it.shortcut));
       items.forEach(it => seen.add(it.shortcut));
       if (items.length) groups.push({ name: pg.name, items: items.map(it => ({ ...it, big: false })) });
@@ -410,35 +435,38 @@ Luce | lampadina | interruttore`;
     const pages = parse(config);
     const luci = categoryPage(pages, 'Luci', LIGHT_ICONS);
     const clima = categoryPage(pages, 'Clima', CLIMA_ICONS);
-    const top = pages.filter(p => /^(casa|scene|sicurezza)$/i.test(p.name));
-    const rooms = pages.filter(p => !/^(casa|scene|sicurezza)$/i.test(p.name));
+    const top = pages.filter(p => /^(casa|scene|sicurezza|pulizia)$/i.test(p.name));
+    const rooms = pages.filter(p => !/^(casa|scene|sicurezza|pulizia)$/i.test(p.name));
     return { top: [...top, ...(luci.groups.length ? [luci] : []), ...(clima.groups.length ? [clima] : [])], rooms };
   }
 
   // ================= Disegno =================
   function navIcon(name, isRoom) {
     if (isRoom) return 'stanza';
-    return { casa: 'casa', scene: 'scene', sicurezza: 'scudo', luci: 'lampadina', clima: 'clima' }[name.toLowerCase()] || 'stanza';
+    return { casa: 'casa', scene: 'scene', sicurezza: 'scudo', pulizia: 'robot', luci: 'lampadina', clima: 'clima' }[name.toLowerCase()] || 'stanza';
   }
 
   function render() {
     const { top, rooms } = allPages();
-    const list = [...top, ...rooms];
+    // Pagina "Stanze": un riquadro grande per stanza (così la barra laterale non deve mai scorrere)
+    const stanze = rooms.length ? [{ name: 'Stanze', groups: [{ name: '', items: rooms.map(r => ({ name: r.name, icon: 'stanza', room: r.name, big: true, shortcut: '', toggle: false })) }] }] : [];
+    const list = [...top, ...stanze, ...rooms];
     if (!list.find(p => p.name === current)) current = list[0] ? list[0].name : '';
+    const inRoom = rooms.some(r => r.name === current);
 
     // barra laterale
     const nav = $('nav');
     nav.textContent = '';
     const addNav = (p, isRoom) => {
-      const b = el('button', 'navitem' + (p.name === current ? ' active' : ''));
+      const active = p.name === current || (p.name === 'Stanze' && inRoom);
+      const b = el('button', 'navitem' + (active ? ' active' : ''));
       b.innerHTML = svg(navIcon(p.name, isRoom));
       b.appendChild(el('span', null, p.name));
       b.addEventListener('click', () => { current = p.name; store.set('casa.page', current); render(); $('pages').scrollLeft = 0; });
       nav.appendChild(b);
     };
     top.forEach(p => addNav(p, false));
-    if (rooms.length) nav.appendChild(el('div', 'navlabel', 'Stanze'));
-    rooms.forEach(p => addNav(p, true));
+    stanze.forEach(p => addNav(p, true));
 
     // sfondo
     const idx = Math.max(0, list.findIndex(p => p.name === current));
@@ -451,17 +479,78 @@ Luce | lampadina | interruttore`;
     if (sideBtns.parentNode !== $('topbar')) $('topbar').appendChild(sideBtns);
     const page = list[idx];
     $('title').textContent = page ? page.name : '';
+    renderAlerts(page, list);
     if (!page) { main.appendChild(el('div', 'empty', 'Nessuna pagina: apri le impostazioni ⚙︎ per aggiungerne.')); return; }
     for (const g of page.groups) {
       if (!g.items.length) continue;
       const sec = el('section', 'group');
-      if (g.name) sec.appendChild(el('h3', null, g.name));
+      const onlySensors = g.items.every(i => i.sensor);
+      if (onlySensors) {
+        // gruppo di sensori: riquadrato, con promemoria per aggiornare
+        sec.classList.add('framed');
+        const head = el('div', 'grouphead');
+        if (g.name) head.appendChild(el('h3', null, g.name));
+        const hint = el('button', 'refreshhint');
+        // porte/finestre cambiano spesso: promemoria dopo 1 minuto; temperatura/umidità dopo 10
+        hint.dataset.stale = g.items.some(i => ['porta', 'finestra', 'movimento', 'allarme'].includes(i.icon)) ? 1 : 10;
+        hint.addEventListener('click', refreshNow);
+        head.appendChild(hint);
+        sec.appendChild(head);
+      } else if (g.name) sec.appendChild(el('h3', null, g.name));
       const grid = el('div', 'grid');
       g.items.forEach(it => grid.appendChild(tile(it)));
       sec.appendChild(grid);
       main.appendChild(sec);
     }
+    updateRefreshHints();
     layoutGrids();
+  }
+
+  // ---- Promemoria aggiornamento sensori ----
+  const STALE_MIN = 5;
+  function refreshNow() { run({ name: 'Stati aggiornati', shortcut: 'Aggiorna dashboard', toggle: false }, null); }
+  function updateRefreshHints() {
+    const last = store.get('casa.lastRefresh', 0);
+    const min = last ? Math.floor((Date.now() - last) / 60000) : null;
+    let text, stale;
+    if (min === null) { text = 'Da aggiornare'; stale = true; }
+    else if (min < 1) { text = 'Aggiornati ora'; stale = false; }
+    else {
+    }
+    document.querySelectorAll('.refreshhint').forEach(h => {
+      let t = text, st = stale;
+      if (min !== null && min >= 1) {
+        const ago = min < 60 ? `${min} min fa` : `${Math.floor(min / 60)} h fa`;
+        st = min >= Number(h.dataset.stale || STALE_MIN);
+        t = st ? `${ago} · aggiorna` : `Aggiornati ${ago}`;
+      }
+      h.innerHTML = svg('aggiorna'); h.appendChild(el('span', null, t));
+      h.classList.toggle('stale', st);
+    });
+  }
+  setInterval(updateRefreshHints, 15000);
+
+  // Sulla pagina Casa: una riga di avvisi con finestre/porte aperte (solo se ce ne sono)
+  function renderAlerts(page, list) {
+    const box = $('alerts');
+    box.textContent = '';
+    if (!page || !/^casa$/i.test(page.name)) { box.hidden = true; return; }
+    const seen = new Map();
+    for (const pg of list) for (const g of pg.groups) for (const it of g.items) {
+      if (!it.sensor || !['finestra', 'porta', 'movimento'].includes(it.icon)) continue;
+      const k = it.shortcut.toLowerCase();
+      if (!seen.has(k) || it.name.length > seen.get(k).name.length) seen.set(k, it); // nome più completo
+    }
+    const open = [...seen.values()].filter(it => sensorInfo(it).alert);
+    box.hidden = open.length === 0;
+    const sic = list.find(p => /^sicurezza$/i.test(p.name));
+    open.forEach(it => {
+      const c = el('button', 'chip');
+      c.innerHTML = svg(it.icon);
+      c.appendChild(el('span', null, `${it.name} · ${sensorInfo(it).text.toLowerCase()}`));
+      if (sic) c.addEventListener('click', () => { current = sic.name; store.set('casa.page', current); render(); $('pages').scrollLeft = 0; });
+      box.appendChild(c);
+    });
   }
 
   // Calcola quante righe di riquadri entrano in altezza e quanto è larga una colonna
@@ -473,8 +562,13 @@ Luce | lampadina | interruttore`;
     pages.style.setProperty('--colw', colw + 'px');
     pages.querySelectorAll('.grid').forEach(g => {
       const h = g.clientHeight;
-      const rows = Math.max(1, Math.floor((h + 10) / 76));
+      let rows = Math.max(1, Math.floor((h + 10) / 66));
+      // con riquadri grandi (2 righe) uso un numero pari di righe: 2 grandi per colonna, niente spazio vuoto
+      if (g.querySelector('.tile.big, .tile.wasbig') && rows > 2 && rows % 2) rows--;
+      // le righe si allargano fino a riempire l'altezza disponibile
+      const rowh = Math.max(56, Math.min(90, Math.floor((h - 10 * (rows - 1)) / rows)));
       g.style.setProperty('--rows', rows);
+      g.style.setProperty('--rowh', rowh + 'px');
       g.querySelectorAll('.tile.big, .tile.wasbig').forEach(t => {
         t.classList.toggle('big', rows >= 2); t.classList.toggle('wasbig', rows < 2);
       });
@@ -524,6 +618,20 @@ Luce | lampadina | interruttore`;
   }
 
   function tile(it) {
+    if (it.room) {
+      // riquadro stanza: nome + temperatura (se c'è un sensore)
+      const all = parse(config).find(p => p.name === it.room);
+      const t = all && all.groups.flatMap(g => g.items).find(i => i.sensor && i.icon === 'termometro');
+      const open = all && all.groups.flatMap(g => g.items).filter(i => i.sensor && sensorInfo(i).alert).length;
+      const b = el('button', 'tile roomtile big' + (open ? ' alert' : ''));
+      const ic = el('span', 'ic'); ic.innerHTML = svg('stanza');
+      const tx = el('span', 'tx');
+      const sub = [t ? sensorInfo(t).text : '', open ? `${open} aperta` + (open > 1 ? 'e' : '') : ''].filter(x => x && !/↻/.test(x)).join(' · ');
+      tx.append(el('div', 'nm', it.room), el('div', 'st', sub));
+      b.append(ic, tx);
+      b.addEventListener('click', () => { current = it.room; store.set('casa.page', current); render(); $('pages').scrollLeft = 0; });
+      return b;
+    }
     if (it.sensor) {
       const info = sensorInfo(it);
       const b = el('button', 'tile sensor' + (it.big ? ' big' : '') + (info.alert ? ' alert' : '') + (info.armed ? ' armed' : ''));
@@ -746,7 +854,7 @@ Luce | lampadina | interruttore`;
       const i = sc.indexOf('?result=');
       result = decodeURIComponent(sc.slice(i + 8).replace(/\+/g, ' ')); sc = sc.slice(0, i);
     }
-    if (result !== null) applyResult(result, sc);
+    if (result !== null) { const n = applyResult(result, sc); if (n && /[=:]/.test(result)) store.set('casa.lastRefresh', Date.now()); }
     if (q.has('ok')) setTimeout(() => toast('✓ ' + q.get('ok')), 300);
     if (q.has('err')) {
       const sc = q.get('err');
