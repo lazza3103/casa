@@ -45,7 +45,9 @@
     background: rgba(20,16,14,.38); border-right: 1px solid rgba(255,255,255,.06);
     -webkit-backdrop-filter: blur(40px) saturate(1.4); backdrop-filter: blur(40px) saturate(1.4);
   }
-  .clockbox { padding: 0 10px 8px; }
+  .clockbox { padding: 0 10px 8px; transition: padding .3s; }
+  body.fs .clockbox { padding-top: 46px; }
+  body.fs .side { padding-top: 12px; }
   .clock { font-size: 40px; font-weight: 700; letter-spacing: -1.5px; line-height: 1; font-variant-numeric: tabular-nums; }
   .date { font-size: 15px; font-weight: 600; margin-top: 4px; text-transform: capitalize; }
   .wx { font-size: 14px; color: var(--muted); margin-top: 3px; min-height: 18px; }
@@ -472,7 +474,9 @@ Luce | lampadina | interruttore`;
       url = `shortcuts://x-callback-url/run-shortcut?name=${name}${inp}&x-success=${back}&x-error=${err}&x-cancel=${err}`;
     }
     setTimeout(render, 350);
-    location.href = url;
+    // In tutto schermo iOS può "perdere" l'apertura di Comandi: prima esco, poi apro.
+    if (isFullscreen()) { exitFullscreen(); setTimeout(() => { location.href = url; }, 400); }
+    else location.href = url;
   }
 
   let toastTimer;
@@ -701,7 +705,21 @@ Luce | lampadina | interruttore`;
       if (r && r.catch) r.catch(() => {});
     } catch {}
   }
-  document.addEventListener('click', goFullscreen, true);
+  function isFullscreen() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+  function exitFullscreen() {
+    try {
+      const d = document, r = d.exitFullscreen ? d.exitFullscreen() : d.webkitExitFullscreen && d.webkitExitFullscreen();
+      if (r && r.catch) r.catch(() => {});
+    } catch {}
+  }
+  // Il tutto schermo si attiva toccando qualunque punto che non avvii un comando
+  document.addEventListener('click', e => {
+    if (e.target.closest('.tile, #btnRefresh, .sheet-bg, .pin-bg')) return;
+    goFullscreen();
+  }, true);
+  const markFs = () => document.body.classList.toggle('fs', isFullscreen());
+  document.addEventListener('fullscreenchange', markFs);
+  document.addEventListener('webkitfullscreenchange', markFs);
 
   // ================= Impostazioni =================
   const sideBtns = el('div', 'sidebtns');
