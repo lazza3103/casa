@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#1a1512">
+<meta name="theme-color" content="#1a1512" id="themeColor">
 <title>Casa</title>
 <style>
   :root {
@@ -141,7 +141,7 @@
 
   /* Schermo a riposo */
   .dim { position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 1.5s; z-index: 20; display: grid; place-items: center; }
-  .dim.active { opacity: .9; pointer-events: auto; }
+  .dim.active { opacity: 1; pointer-events: auto; }
   .dim .dclock { font-size: 128px; font-weight: 700; color: #5c5c62; letter-spacing: -4px; font-variant-numeric: tabular-nums; }
 
   /* Tastierino codice */
@@ -724,7 +724,13 @@ Luce | lampadina | interruttore`;
   async function keepAwake() { try { if ('wakeLock' in navigator && document.visibilityState === 'visible') await navigator.wakeLock.request('screen'); } catch {} }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { keepAwake(); loadWeather(); render(); } });
   let idleTimer;
-  const setDim = on => $('dim').classList.toggle('active', on);
+  // Durante lo screensaver la barra di Safari diventa nera e si confonde con lo sfondo
+  const setDim = on => {
+    $('dim').classList.toggle('active', on);
+    $('themeColor').setAttribute('content', on ? '#000000' : '#1a1512');
+    document.documentElement.style.background = on ? '#000' : '';
+    document.body.style.background = on ? '#000' : '';
+  };
   function resetIdle() { clearTimeout(idleTimer); if (opts.autoDim) idleTimer = setTimeout(() => setDim(true), 15000); }
   $('dim').addEventListener('click', e => { e.stopPropagation(); setDim(false); resetIdle(); goFullscreen(); });
   ['pointerdown', 'touchstart'].forEach(ev => document.addEventListener(ev, resetIdle, { passive: true }));
