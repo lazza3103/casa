@@ -856,7 +856,7 @@ Luce | lampadina | interruttore`;
     $('pinTitle').textContent = title || 'Inserisci il codice';
     $('pinSub').textContent = '';
     $('pinDots').hidden = $('pinKeys').hidden = !pin;
-    $('pinFace').hidden = !faceId;
+    $('pinFace').hidden = !(faceId && faceSupported());
     $('pinCancel').hidden = !!pin;
     drawDots(); $('pinBg').classList.add('open');
   }
@@ -864,17 +864,9 @@ Luce | lampadina | interruttore`;
     if (!pin && !faceId) return cb();
     if (isFullscreen()) exitFullscreen();
     pinCb = cb;
-    if (faceId && faceSupported()) {
-      // il tastierino è già aperto sotto: se il Face ID non c'è o si annulla, si digita il codice
-      openPinPad(title);
-      $('pinSub').textContent = pin ? 'Face ID oppure codice' : 'Face ID';
-      faceCheck().then(ok => {
-        if (ok) { const c = pinCb; closePin(); fails = 0; c && c(); }
-        else $('pinSub').textContent = pin ? 'Inserisci il codice' : 'Face ID non riuscito: imposta anche un codice in ⚙︎';
-      });
-      return;
-    }
+    // prima il tastierino; il Face ID parte solo se tocchi "Usa Face ID"
     openPinPad(title);
+    if (faceId && faceSupported()) $('pinSub').textContent = pin ? 'Inserisci il codice oppure usa il Face ID' : 'Tocca “Usa Face ID”';
   }
   function closePin() { $('pinBg').classList.remove('open'); pinCb = null; entry = ''; }
   async function pinKey(k) {
@@ -901,8 +893,8 @@ Luce | lampadina | interruttore`;
   $('pinBg').addEventListener('click', e => { if (e.target === $('pinBg')) closePin(); });
   $('pinCancel').addEventListener('click', closePin);
   $('pinFace').addEventListener('click', () => faceCheck().then(ok => {
-    if (ok) { const c = pinCb; closePin(); c && c(); }
-    else $('pinSub').textContent = 'Face ID non riuscito';
+    if (ok) { const c = pinCb; closePin(); fails = 0; c && c(); }
+    else $('pinSub').textContent = pin ? 'Face ID non riuscito: inserisci il codice' : 'Face ID non riuscito';
   }));
 
   // Configurazione personale passata nel link (#config=...): resta solo su questo telefono
