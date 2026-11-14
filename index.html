@@ -104,6 +104,10 @@
 
   /* Scene: pillole scure con icona libera, come in Casa */
   .tile.scene .ic { background: transparent; font-size: 26px; width: 34px; color: #fff; }
+  /* Pulsanti (azioni senza acceso/spento): icona dentro un anello, come un tasto da premere */
+  .tile.action .ic { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.45), 0 0 0 4px rgba(255,255,255,.06); }
+  .tile.action:active .ic, .tile.action.flash .ic { background: var(--accent); color: #fff; box-shadow: 0 0 0 6px rgba(255,179,64,.25); }
+  .tile.action.flash { background: var(--tile); color: var(--text); }
   .tile.scene .nm { font-size: 16px; }
   .tile.flash { background: var(--on-bg); color: var(--on-text); }
   .tile.flash .ic { color: var(--accent); }
@@ -223,7 +227,7 @@
     <div class="hint">
       <code>= Stanza</code> crea una pagina · <code>## Titolo</code> crea un gruppo · ogni pulsante:
       <code>Nome | icona | opzioni | comando rapido</code><br>
-      Opzioni: <code>interruttore</code> (acceso/spento), <code>grande</code> (riquadro alto), <code>codice</code> (chiede il codice prima di eseguire). Se il comando rapido manca, si usa il Nome.
+      Opzioni: <code>interruttore</code> (acceso/spento), <code>grande</code> (riquadro alto), <code>codice</code> (chiede il codice prima di eseguire), <code>input</code> (passa 1 = accendi o 0 = spegni al comando rapido). Se il comando rapido manca, si usa il Nome.
       Le pagine <b>Luci</b> e <b>Clima</b> si compongono da sole in base alle icone.
     </div>
     <div class="icons" id="iconList"></div>
@@ -348,7 +352,7 @@ Luce | lampadina | interruttore`;
       const flags = (p[2] || '').toLowerCase();
       group.items.push({
         name: p[0], icon: (p[1] || 'presa').toLowerCase(),
-        toggle: flags.includes('interr'), big: flags.includes('grande'), code: flags.includes('codice'),
+        toggle: flags.includes('interr'), big: flags.includes('grande'), code: flags.includes('codice'), input: /\binput\b/.test(flags),
         shortcut: p[3] || p[0],
         scene: /scen/i.test(group.name) || !flags.includes('interr') && !['robot', 'base'].includes((p[1] || '').toLowerCase()) && !flags.includes('azione')
       });
@@ -437,12 +441,12 @@ Luce | lampadina | interruttore`;
   function tile(it) {
     const on = it.toggle && states[it.shortcut];
     const isScene = !it.toggle && it.scene;
-    const b = el('button', 'tile' + (isScene ? ' scene' : '') + (it.big ? ' big' : '') + (on ? ' on' : ''));
+    const isAction = !it.toggle && !isScene;
+    const b = el('button', 'tile' + (isScene ? ' scene' : '') + (isAction ? ' action' : '') + (it.big ? ' big' : '') + (on ? ' on' : ''));
     const ic = el('span', 'ic'); ic.innerHTML = svg(it.icon);
     const tx = el('span', 'tx');
     tx.appendChild(el('div', 'nm', it.name));
     if (it.toggle) tx.appendChild(el('div', 'st', stateText(it)));
-    else if (!isScene) tx.appendChild(el('div', 'st', 'Tocca per avviare'));
     b.append(ic, tx);
     if (it.code) { const l = el('span', 'lock'); l.innerHTML = svg('lucchetto'); b.appendChild(l); }
     b.addEventListener('click', () => {
@@ -459,11 +463,13 @@ Luce | lampadina | interruttore`;
     if (it.toggle) { states[it.shortcut] = !states[it.shortcut]; store.set('casa.states.v2', states); }
     if (btn) btn.classList.add('flash');
     const name = encodeURIComponent(it.shortcut);
-    let url = `shortcuts://run-shortcut?name=${name}`;
+    // con l'opzione "input" il comando rapido riceve 1 = accendi, 0 = spegni
+    const inp = it.input ? `&input=text&text=${states[it.shortcut] ? 1 : 0}` : '';
+    let url = `shortcuts://run-shortcut?name=${name}${inp}`;
     if (opts.autoReturn && /^https?:$/.test(location.protocol)) {
       const back = encodeURIComponent(baseUrl() + '?ok=' + encodeURIComponent(it.name) + '&s=' + encodeURIComponent(it.shortcut));
       const err = encodeURIComponent(baseUrl() + '?err=' + encodeURIComponent(it.shortcut));
-      url = `shortcuts://x-callback-url/run-shortcut?name=${name}&x-success=${back}&x-error=${err}&x-cancel=${err}`;
+      url = `shortcuts://x-callback-url/run-shortcut?name=${name}${inp}&x-success=${back}&x-error=${err}&x-cancel=${err}`;
     }
     setTimeout(render, 350);
     location.href = url;
@@ -595,8 +601,8 @@ Luce | lampadina | interruttore`;
   // Il comando rapido può restituire (Interrompi e restituisci):
   //  - un solo valore (es. "Sì", "1", "Acceso") → stato del pulsante appena premuto
   //  - più righe "Nome=valore" → stato di più accessori (comando "Aggiorna dashboard")
-  const ON_WORDS = ['1', 'true', 'sì', 'si', 'yes', 'on', 'acceso', 'accesa', 'accesi', 'attivo', 'attiva', 'aperto', 'aperta'];
-  const OFF_WORDS = ['0', 'false', 'no', 'off', 'spento', 'spenta', 'spenti', 'disattivo', 'disattiva', 'chiuso', 'chiusa'];
+  const ON_WORDS = ['1', 'true', 'sì', 'si', 'yes', 'on', 'acceso', 'accesa', 'accesi', 'attivo', 'attiva', 'aperto', 'aperta', 'riscaldamento', 'raffreddamento', 'riscalda', 'raffredda', 'auto', 'automatico', 'automatica', 'caldo', 'freddo', 'heat', 'cool'];
+  const OFF_WORDS = ['0', 'false', 'no', 'off', 'spento', 'spenta', 'spenti', 'disattivo', 'disattiva', 'disattivato', 'non attivo', 'non attiva', 'inattivo', 'inattiva', 'chiuso', 'chiusa', 'nessuno'];
   function readBool(v) {
     v = String(v || '').trim().toLowerCase().replace(/[.!]$/, '');
     if (ON_WORDS.includes(v)) return true;
