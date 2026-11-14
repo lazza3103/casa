@@ -49,12 +49,12 @@
   }
   /* a tutto schermo la X di iOS sta in alto a sinistra: lascio spazio */
   .side { transition: padding .3s; }
-  body.fs .side { padding-top: 54px; }
-  .clockmini { text-align: right; flex: none; line-height: 1.15; }
+  body.fs .side { padding-top: 40px; }
+  .clockmini { text-align: center; line-height: 1.15; }
   .clock { font-size: 30px; font-weight: 700; letter-spacing: -1px; line-height: 1; font-variant-numeric: tabular-nums; }
   .clocksub { font-size: 13px; color: var(--muted); margin-top: 3px; white-space: nowrap; }
   .date { text-transform: capitalize; }
-  nav { overflow-y: auto; flex: 1; scrollbar-width: none; margin: 0 -2px; padding: 0 2px; }
+  nav { overflow-y: auto; flex: none; margin: auto -2px; /* centrato in verticale, lontano dalla X */ scrollbar-width: none; padding: 0 2px; }
   nav::-webkit-scrollbar { display: none; }
   .navlabel { font-size: 13px; font-weight: 600; color: var(--muted); padding: 12px 12px 4px; }
   .navitem {
@@ -64,8 +64,10 @@
   }
   .navitem svg { font-size: 22px; color: var(--accent); }
   .navitem.active { background: rgba(255,255,255,.16); font-weight: 600; }
-  .topbar { display: flex; align-items: center; gap: 16px; flex: none; padding-bottom: 4px; }
-  .topbar .title { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* titolo a sinistra, orologio al centro, pulsanti a destra */
+  .topbar { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px; flex: none; padding-bottom: 4px; }
+  .topbar .title { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topbar .sidebtns { justify-self: end; }
   .sidebtns { display: flex; gap: 8px; flex: none; }
   .roundbtn {
     width: 42px; height: 42px; border-radius: 50%; border: 0; cursor: pointer;
@@ -122,6 +124,12 @@
   .tile .st { font-size: 13px; color: var(--muted); margin-top: 1px; white-space: nowrap; }
   .tile.big { grid-row: span 2; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 14px; }
   .tile.big .ic { width: 46px; height: 46px; font-size: 24px; }
+  /* Riquadri quadrati (Casa, Luci): metà dei grandi, uno sopra l'altro */
+  .grid.sq { grid-auto-columns: var(--sqw, 120px); }
+  .grid.sq .tile, .grid.sq .tile.big { grid-row: auto; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 12px; gap: 6px; }
+  .grid.sq .tile .ic { width: 38px; height: 38px; font-size: 20px; }
+  .grid.sq .tile .nm { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 15px; }
+  .grid.sq .tile .lock { top: 10px; right: 10px; }
 
   .tile.on { background: var(--on-bg); color: var(--on-text); }
   .tile.on .ic { background: var(--yellow); color: #fff; }
@@ -426,7 +434,9 @@ Luce | lampadina | interruttore`;
       if (/^(casa|scene|sicurezza|pulizia)$/i.test(pg.name)) continue;
       const items = pg.groups.flatMap(g => g.items).filter(it => icons.includes(it.icon) && !seen.has(it.shortcut));
       items.forEach(it => seen.add(it.shortcut));
-      if (items.length) groups.push({ name: pg.name, items: items.map(it => ({ ...it, big: false })) });
+      const sens = items.filter(it => it.sensor), ctrl = items.filter(it => !it.sensor);
+      if (sens.length) groups.push({ name: pg.name, items: sens.map(it => ({ ...it, big: false })) });
+      if (ctrl.length) groups.push({ name: sens.length ? `${pg.name} · comandi` : pg.name, items: ctrl.map(it => ({ ...it, big: false })) });
     }
     return { name: title, groups, auto: true };
   }
@@ -497,7 +507,7 @@ Luce | lampadina | interruttore`;
         head.appendChild(hint);
         sec.appendChild(head);
       } else if (g.name) sec.appendChild(el('h3', null, g.name));
-      const grid = el('div', 'grid');
+      const grid = el('div', 'grid' + (/^(casa|luci)$/i.test(page.name) && !onlySensors ? ' sq' : ''));
       g.items.forEach(it => grid.appendChild(tile(it)));
       sec.appendChild(grid);
       main.appendChild(sec);
@@ -562,6 +572,13 @@ Luce | lampadina | interruttore`;
     pages.style.setProperty('--colw', colw + 'px');
     pages.querySelectorAll('.grid').forEach(g => {
       const h = g.clientHeight;
+      if (g.classList.contains('sq')) {
+        // quadrati: quante righe entrano (min 100px) e lato = altezza riga
+        const rows = Math.max(1, Math.floor((h + 10) / 110));
+        const side = Math.max(100, Math.min(150, Math.floor((h - 10 * (rows - 1)) / rows)));
+        g.style.setProperty('--rows', rows); g.style.setProperty('--rowh', side + 'px'); g.style.setProperty('--sqw', side + 'px');
+        return;
+      }
       let rows = Math.max(1, Math.floor((h + 10) / 66));
       // con riquadri grandi (2 righe) uso un numero pari di righe: 2 grandi per colonna, niente spazio vuoto
       if (g.querySelector('.tile.big, .tile.wasbig') && rows > 2 && rows % 2) rows--;
