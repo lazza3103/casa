@@ -922,7 +922,9 @@ Luce | lampadina | interruttore`;
     $('pinCancel').hidden = !!pin; entryHash = entryHashFor = null;
     drawDots(); $('pinBg').classList.add('open');
   }
-  function askPin(title, cb) {
+  let pinDirect = false;
+  function askPin(title, cb, direct) {
+    pinDirect = !!direct;
     if (!pin && !faceId) return cb();
     if (isFullscreen()) exitFullscreen();
     pinCb = cb;
@@ -967,7 +969,8 @@ Luce | lampadina | interruttore`;
   $('pinBg').addEventListener('click', e => { if (e.target === $('pinBg')) closePin(); });
   $('pinCancel').addEventListener('click', closePin);
   $('pinFace').addEventListener('click', () => faceCheck().then(ok => {
-    if (ok) { fails = 0; $('pinFace').hidden = true; $('pinGo').hidden = false; $('pinSub').textContent = 'Riconosciuto'; }
+    if (ok && pinDirect) { fails = 0; const c = pinCb; closePin(); c && c(); }
+    else if (ok) { fails = 0; $('pinFace').hidden = true; $('pinGo').hidden = false; $('pinSub').textContent = 'Riconosciuto'; }
     else $('pinSub').textContent = pin ? 'Face ID non riuscito: inserisci il codice' : 'Face ID non riuscito';
   }));
   $('pinGo').addEventListener('click', () => { const c = pinCb; closePin(); c && c(); });
@@ -986,7 +989,7 @@ Luce | lampadina | interruttore`;
       config = txt; store.set('casa.config.v2', txt); store.set('casa.edited', true);
       render(); toast('Configurazione importata');
     };
-    setTimeout(() => askPin('Codice per importare la configurazione', apply), 300);
+    setTimeout(() => askPin('Codice per importare la configurazione', apply, true), 300);
   }
   importFromLink();
   window.addEventListener('hashchange', importFromLink);
@@ -1224,7 +1227,7 @@ Luce | lampadina | interruttore`;
     $('optReturn').checked = opts.autoReturn; $('optDim').checked = opts.autoDim;
     $('newPin').value = ''; showFaceState();
     $('sheetBg').classList.add('open');
-  }));
+  }, true));
   $('btnPin').addEventListener('click', async () => {
     const v = $('newPin').value.trim();
     if (!/^\d{4,6}$/.test(v)) return toast('Il codice deve avere da 4 a 6 cifre');
