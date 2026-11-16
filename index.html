@@ -549,7 +549,7 @@ Luce | lampadina | interruttore`;
   const $ = id => document.getElementById(id);
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 
-  const BUILD = '92f554315a'; // cambia a ogni versione pubblicata: serve al pannello per accorgersi degli aggiornamenti
+  const BUILD = 'e0d328145c'; // cambia a ogni versione pubblicata: serve al pannello per accorgersi degli aggiornamenti
   let hubDownAt = 0, rainSoon = false, alarmShownFor = null, askCb = null, lastUpdateCheck = Date.now(), wxData = null, airData = null;
   let config = store.get('casa.config.v2', DEFAULT_CONFIG);
   if (store.get('casa.edited', false) !== true) config = DEFAULT_CONFIG;
@@ -625,28 +625,8 @@ Luce | lampadina | interruttore`;
     return { casa: 'casa', scene: 'scene', sicurezza: 'scudo', pulizia: 'robot', luci: 'lampadina', clima: 'clima' }[name.toLowerCase()] || 'stanza';
   }
 
-  // Registro del riscaldamento: segno quando il termostato risulta acceso o spento (per contare le ore)
-  function thermoItem() { return parse(config).flatMap(p => p.groups.flatMap(g => g.items)).find(i => i.toggle && i.icon === 'termometro'); }
-  function noteHeat() {
-    const t = thermoItem(); if (!t) return;
-    const on = !!states[t.shortcut], now = Date.now();
-    const h = store.get('casa.heat', { on: false, since: 0, log: [] });
-    if (on && !h.on) { h.on = true; h.since = now; }
-    else if (!on && h.on) { h.log.push([h.since, now]); h.on = false; h.since = 0; }
-    else return;
-    h.log = h.log.filter(x => x[1] > now - 3 * 86400000);
-    store.set('casa.heat', h);
-  }
-  // minuti di riscaldamento acceso tra "da" e "a"
-  function heatMinutes(from, to) {
-    const h = store.get('casa.heat', { on: false, since: 0, log: [] });
-    const iv = h.log.slice(); if (h.on) iv.push([h.since, Date.now()]);
-    return Math.round(iv.reduce((t, [a, b]) => t + Math.max(0, Math.min(b, to) - Math.max(a, from)), 0) / 60000);
-  }
-  const fmtDur = m => m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? ' ' + (m % 60) + ' min' : ''}`;
   function render() {
     setTimeout(checkAlarm, 0);
-    noteHeat();
     const { top, rooms } = allPages();
     // Pagina "Stanze": un riquadro grande per stanza (così la barra laterale non deve mai scorrere)
     // le stanze si aprono dalla pagina Casa (tessere stanza), niente voce separata nella barra
@@ -838,8 +818,7 @@ Luce | lampadina | interruttore`;
       box.appendChild(lc); shown++;
       if (thermo) {
         const tc = el('button', 'chip ' + (states[thermo.shortcut] ? 'yellow' : 'grey')); tc.innerHTML = svg('termometro');
-        const hs = store.get('casa.heat', {}).since, dur = states[thermo.shortcut] && hs ? Math.round((Date.now() - hs) / 60000) : 0;
-        tc.appendChild(el('span', null, states[thermo.shortcut] ? (dur >= 5 ? `Riscaldamento acceso da ${fmtDur(dur)}` : 'Riscaldamento acceso') : 'Riscaldamento spento'));
+        tc.appendChild(el('span', null, states[thermo.shortcut] ? 'Riscaldamento acceso' : 'Riscaldamento spento'));
         tc.addEventListener('click', () => { current = 'Clima'; store.set('casa.page', current); render(); });
         box.appendChild(tc); shown++;
       }
@@ -1524,7 +1503,6 @@ Luce | lampadina | interruttore`;
     if (airData && airData.aqi != null) row('aria', `Aria esterna ${airData.aqi >= 60 ? '<b>' + aqiText(airData.aqi) + '</b>' : aqiText(airData.aqi)}${airData.pollen >= 50 ? ' · <b>pollini alti</b>' : ''}`, airData.aqi >= 60 || airData.pollen >= 50);
     const op = openSensors();
     row(op.length ? op[0].icon : 'finestra', op.length ? `<b>${op.length} apert${op.length > 1 ? 'e' : 'a'}</b>: ${esc(op.map(i => i.name).join(', '))}` : 'Porte e finestre chiuse', op.length > 0);
-    if (thermoItem()) { const m = heatMinutes(sl.from, Date.now()); row('fiamma', `${sl.label} il riscaldamento è stato ${m ? 'acceso <b>' + fmtDur(m) + '</b>' : 'spento'}`); }
     for (const r of highHumidity()) row('goccia', `Umidità alta: ${esc(r.room)} <b>${r.val}%</b>`, true);
     $('sumTitle').textContent = sl.title;
     $('sumBody').innerHTML = rows.join('');
