@@ -103,6 +103,7 @@
   .alerts .refreshhint { margin: 0; flex: none; }
   .chipsep { flex: none; width: 1px; align-self: stretch; margin: 2px 6px; background: rgba(255,255,255,.2); }
   .chip.green { background: rgba(48,209,88,.18); border-color: rgba(48,209,88,.5); color: #a5f0b8; }
+  .chip.yellow { background: rgba(255,201,51,.18); border-color: rgba(255,201,51,.5); color: #ffe08a; }
   .chip.grey { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.18); color: var(--text); }
   .chip.red { background: rgba(255,69,58,.25); border-color: rgba(255,69,58,.6); color: #ffb4ae; }
   .group { flex: none; display: flex; flex-direction: column; min-height: 0; scroll-snap-align: start; }
@@ -133,6 +134,14 @@
   .tile.big .ic { width: 46px; height: 46px; font-size: 24px; }
   /* Riquadri quadrati (Casa, Luci): metà dei grandi, uno sopra l'altro */
   .grid.sq { grid-auto-columns: var(--sqw, 120px); }
+  .tile.fun .ic.emo { background: transparent !important; box-shadow: none !important; font-size: 30px; width: auto; min-width: 40px; }
+  .tile.fun { background: linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.04)); }
+  .tile.fun.magic { background: linear-gradient(135deg, rgba(160,190,255,.22), rgba(40,50,90,.35)); border-color: rgba(190,210,255,.35); }
+  .tile.fun.magic .ic { color: #dfe8ff; box-shadow: inset 0 0 0 1.5px rgba(210,225,255,.6), 0 0 14px rgba(170,200,255,.35); }
+  .tile.fun .nm { font-size: 15px; line-height: 1.2; white-space: normal; }
+  .grid.col1 .tile .nm { white-space: normal; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; font-size: 15px; line-height: 1.2; }
+  .grid.col1 .tile .ic { width: 48px; height: 48px; font-size: 30px; }
+  .grid.col1 { grid-auto-columns: 240px; grid-template-rows: repeat(3, minmax(0, 1fr)) !important; }
   .grid.sq .tile, .grid.sq .tile.big { grid-row: auto; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 12px; gap: 6px; }
   .grid.sq .tile .ic { width: 38px; height: 38px; font-size: 20px; }
   .grid.sq .tile .nm { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 15px; }
@@ -148,6 +157,9 @@
   .tile.on { background: var(--on-bg); color: var(--on-text); }
   .tile.on .ic { background: var(--yellow); color: #fff; }
   .tile.on .st { color: var(--on-muted); }
+  .tile.on.sec-away .ic, .tile.on.sec-night .ic { background: #ff3b30; color: #fff; }
+  .tile.on.sec-off .ic { background: #30d158; color: #fff; box-shadow: none; }
+  .tile.fun.magic.on { background: var(--on-bg); color: var(--on-text); }
 
   /* Scene: pillole scure con icona libera, come in Casa */
   .tile.scene .ic { background: transparent; font-size: 26px; width: 34px; color: #fff; }
@@ -173,6 +185,13 @@
   .refreshhint.stale { background: rgba(255,149,0,.2); border-color: rgba(255,149,0,.55); color: #ffcc80; }
   .tile.roomtile .st { font-size: 15px; font-weight: 600; color: var(--text); opacity: .8; }
   .tile.roomtile.alert { border-color: rgba(255,149,0,.55); }
+  .tile.roomtile.lit .ic { background: var(--yellow); color: #fff; }
+  .tile.roomtile .st.sub2 { font-size: 13px; font-weight: 600; }
+  .grid.sq .tile.roomtile .nm { -webkit-line-clamp: 1; white-space: nowrap; display: block; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .grid.sq .tile.roomtile .tx { width: 100%; }
+  .grid.sq .tile.roomtile .st { font-size: 14px; }
+  .tile.roomtile.alert .st.sub2 { color: #ffcc80; }
+  .tile.roomtile:not(.alert) .st.sub2 { color: #ffe08a; }
   .tile.roomtile.alert .st { color: #ffcc80; opacity: 1; }
   .tile.sensor.alert { background: rgba(255,149,0,.22); border-color: rgba(255,149,0,.55); }
   .tile.sensor.alert .ic { background: #ff9500; color: #fff; }
@@ -200,6 +219,7 @@
   /* Screensaver in stile StandBy: orologio quadrato a sinistra, calendario e meteo a destra */
   .sb { max-height: 100vh; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; width: min(100%, 980px); height: 100%;
         padding: max(16px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); box-sizing: border-box; }
+  .sb { transition: transform 2s ease; }
   .sbw { background: #161618; border-radius: 30px; color: rgba(255,255,255,.88); overflow: hidden; }
   .sbclock { height: 100%; aspect-ratio: 1; position: relative; display: grid; place-items: center; }
   .sbclock { display: flex; flex-direction: column; align-items: center; justify-content: center; }
@@ -430,11 +450,21 @@
     porta: '<path d="M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17M3.5 21h17M14.5 12.5h.01"/>',
     movimento: '<circle cx="13.5" cy="4.5" r="1.8"/><path d="M9 21l2.6-5.5L15 18v3M11.6 15.5l1.2-5.3 3.4 2.8H20M12.8 10.2 9 11l-2 3"/>',
     scudo: '<path d="M12 3l7.5 3v5.5c0 4.7-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.8-7.5-9.5V6z"/>',
+    scudoturbo: '<path d="M12 3l7.5 3v5.5c0 4.7-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.8-7.5-9.5V6z"/><path d="M13 7.5l-3 5h3.2l-2 4"/>',
+    buonanotte: '<path d="M18 14.5A7 7 0 1 1 9.5 6a5.5 5.5 0 0 0 8.5 8.5z"/><path d="M16.5 3.5h3l-3 3.5h3M20.5 8.5h2l-2 2.3h2"/>',
+    guardia: '<path d="M12 2.5l1.6 2.4V15h-3.2V4.9z"/><path d="M7.5 15h9M12 15v4.5"/><circle cx="12" cy="20.8" r="1.2"/>',
+    mago: '<circle cx="7.8" cy="4.3" r="2.1" fill="currentColor" stroke="none"/><path d="M7.5 7.6L6.4 13.2M6.4 13.2l2.1 3.4.8 4M6.4 13.2l-1.5 3.6-1.8 3.7M7.3 9l2.4 1.8 2.2-.9M7.3 9L4.6 10.6 3.4 12.2"/><path d="M12 9.9l1.3-1.2-.1-1.1 1.4-1 .3-1.2 1-.9" stroke-width="1.15"/><path d="M17.5 20.5V3.5H22v17"/>',
+    portamagica: '<path d="M5 21V11a7 7 0 0 1 14 0v10"/><path d="M8.5 21v-9a3.5 3.5 0 0 1 7 0v9"/><path d="M12 4.6l.7 1.5 1.6.2-1.2 1.1.3 1.6-1.4-.8-1.4.8.3-1.6-1.2-1.1 1.6-.2z" fill="currentColor"/><path d="M3 21h18"/>',
     luna: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
     // navigazione
     casa: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
     scene: '<path d="M11 3l1.7 4.6L17.3 9.3l-4.6 1.7L11 15.6 9.3 11 4.7 9.3l4.6-1.7z"/><path d="M18 14l.8 2.2 2.2.8-2.2.8L18 20l-.8-2.2-2.2-.8 2.2-.8z"/>',
     clima: '<circle cx="12" cy="12" r="2"/><path d="M12 10c0-4 1-7 4-7s3.5 4 0 6.5M14 12c4 0 7 1 7 4s-4 3.5-6.5 0M12 14c0 4-1 7-4 7s-3.5-4 0-6.5M10 12c-4 0-7-1-7-4s4-3.5 6.5 0"/>',
+    letto: '<path d="M3 20v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8M3 16h18"/><path d="M5 10V6a1.5 1.5 0 0 1 1.5-1.5h11A1.5 1.5 0 0 1 19 6v4"/><path d="M7 13h3.5M13.5 13H17"/>',
+    lettosingolo: '<path d="M4 6v14M20 12.5V20M4 16.5h16M4 12.5h16"/><rect x="6.2" y="8.8" width="4.6" height="3.7" rx="1.4"/>',
+    vasca: '<path d="M3 12h18v2.5a4.5 4.5 0 0 1-4.5 4.5h-9A4.5 4.5 0 0 1 3 14.5z"/><path d="M6 12V6a2 2 0 0 1 3.6-1.2"/><path d="M7 19l-1 2M17 19l1 2"/>',
+    cucina: '<path d="M4.5 10h15v6.5A3.5 3.5 0 0 1 16 20H8a3.5 3.5 0 0 1-3.5-3.5z"/><path d="M2 12h2.5M19.5 12H22M9.5 7.5h5"/><path d="M9.5 2.8c-.6.8.6 1.5 0 2.4M14.5 2.8c-.6.8.6 1.5 0 2.4"/>',
+    corridoio: '<path d="M3 4h18M7.5 4v2M16.5 4v2"/><path d="M5 10.5l2.5-4.5 2.5 4.5zM14 10.5l2.5-4.5 2.5 4.5z"/><path d="M5.5 14l-1.2 4M9.5 14l1.2 4M14.5 14l-1.2 4M18.5 14l1.2 4"/>',
     stanza: '<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M12 20.5V16a4 4 0 0 1 4-4h4.5"/>',
     ingranaggio: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'
   };
@@ -496,7 +526,7 @@ Luce | lampadina | interruttore`;
         name: p[0], icon: (p[1] || 'presa').toLowerCase(),
         toggle: flags.includes('interr'), big: flags.includes('grande'), code: flags.includes('codice'), input: /\binput\b/.test(flags),
         sensor: flags.includes('sensore'), hidden: flags.includes('nascosto'),
-        shortcut: p[3] || p[0],
+        shortcut: p[3] || p[0], emoji: p[4] || '',
         scene: !flags.includes('sensore') && (/scen/i.test(group.name) || !flags.includes('interr') && !['robot', 'base'].includes((p[1] || '').toLowerCase()) && !flags.includes('azione'))
       });
     }
@@ -544,8 +574,10 @@ Luce | lampadina | interruttore`;
   function render() {
     const { top, rooms } = allPages();
     // Pagina "Stanze": un riquadro grande per stanza (così la barra laterale non deve mai scorrere)
-    const stanze = rooms.length ? [{ name: 'Stanze', groups: [{ name: '', items: rooms.map(r => ({ name: r.name, icon: 'stanza', room: r.name, big: true, shortcut: '', toggle: false })) }] }] : [];
-    const list = [...top, ...stanze, ...rooms];
+    // le stanze si aprono dalla pagina Casa (tessere stanza), niente voce separata nella barra
+    const ROOM_ICONS = { soggiorno: 'divano', cucina: 'cucina', bagno: 'vasca', corridoio: 'corridoio', 'camera da letto': 'letto', brucamera: 'lettosingolo', brucagno: 'doccia' };
+    const roomTiles = rooms.map(r => ({ name: r.name, icon: ROOM_ICONS[r.name.toLowerCase()] || 'stanza', room: r.name, shortcut: '', toggle: false }));
+    const list = [...top, ...rooms];
     if (!list.find(p => p.name === current)) current = list[0] ? list[0].name : '';
     const inRoom = rooms.some(r => r.name === current);
 
@@ -553,7 +585,7 @@ Luce | lampadina | interruttore`;
     const nav = $('nav');
     nav.textContent = '';
     const addNav = (p, isRoom) => {
-      const active = p.name === current || (p.name === 'Stanze' && inRoom);
+      const active = p.name === current || (/^casa$/i.test(p.name) && inRoom);
       const b = el('button', 'navitem' + (active ? ' active' : ''));
       b.innerHTML = svg(navIcon(p.name, isRoom));
       b.appendChild(el('span', null, p.name));
@@ -561,7 +593,6 @@ Luce | lampadina | interruttore`;
       nav.appendChild(b);
     };
     top.forEach(p => addNav(p, false));
-    stanze.forEach(p => addNav(p, true));
 
     // sfondo
     const idx = Math.max(0, list.findIndex(p => p.name === current));
@@ -595,10 +626,18 @@ Luce | lampadina | interruttore`;
         head.appendChild(hint);
         sec.appendChild(head);
       } else if (g.name) sec.appendChild(el('h3', null, g.name));
-      const grid = el('div', 'grid' + ((/^(casa|luci)$/i.test(page.name) || isRoomPage(page)) && !onlySensors ? ' sq' : ''));
+      const compact = /^casa$/i.test(page.name) && /^(sicurezza|allarme)$/i.test(g.name); // in Casa: pulsanti allarme in colonna stretta
+      const grid = el('div', 'grid' + ((/^(casa|luci)$/i.test(page.name) || isRoomPage(page)) && !onlySensors && !compact ? ' sq' : '') + (compact ? ' col1' : ''));
       g.items.forEach(it => grid.appendChild(tile(it)));
       sec.appendChild(grid);
       main.appendChild(sec);
+    }
+    if (/^casa$/i.test(page.name) && roomTiles.length) {
+      const sec = el('section', 'group');
+      sec.appendChild(el('h3', null, 'Stanze'));
+      const grid = el('div', 'grid sq');
+      roomTiles.forEach(it => grid.appendChild(tile(it)));
+      sec.appendChild(grid); main.appendChild(sec);
     }
     if (!main.children.length && isRoomPage(page)) main.appendChild(el('div', 'empty', 'Nessun comando in questa stanza: i sensori sono nel riepilogo in alto.'));
     updateRefreshHints();
@@ -697,7 +736,7 @@ Luce | lampadina | interruttore`;
       const known = !/↻/.test(info.text);
       const c = el('button', 'chip ' + (info.alert ? 'red' : info.armed ? 'green' : 'grey'));
       c.innerHTML = svg('allarme');
-      c.appendChild(el('span', null, known ? `Allarme · ${info.text.toLowerCase()}` : 'Allarme · tocca per leggere'));
+      c.appendChild(el('span', null, known ? (onSic ? `Allarme · ${info.text.toLowerCase()}` : info.text) : 'Allarme ↻'));
       c.addEventListener('click', refreshNow);
       box.appendChild(c); shown++;
     }
@@ -708,13 +747,37 @@ Luce | lampadina | interruttore`;
       if (!seen.has(k) || it.name.length > seen.get(k).name.length) seen.set(k, it); // nome più completo
     }
     const open = [...seen.values()].filter(it => sensorInfo(it).alert);
+    if (!onSic) {
+      const lights = new Map(), thermo = all.find(i => i.toggle && i.icon === 'termometro');
+      all.forEach(i => { if (i.toggle && LIGHT_ICONS.includes(i.icon)) lights.set(i.shortcut, i); });
+      const on = [...lights.values()].filter(i => states[i.shortcut]).length;
+      const lc = el('button', 'chip ' + (on ? 'yellow' : 'grey')); lc.innerHTML = svg('lampadina');
+      lc.appendChild(el('span', null, on ? `${on} luc${on > 1 ? 'i accese' : 'e accesa'}` : 'Luci spente'));
+      lc.addEventListener('click', () => { current = 'Luci'; store.set('casa.page', current); render(); });
+      box.appendChild(lc); shown++;
+      if (thermo) {
+        const tc = el('button', 'chip ' + (states[thermo.shortcut] ? 'yellow' : 'grey')); tc.innerHTML = svg('termometro');
+        tc.appendChild(el('span', null, states[thermo.shortcut] ? 'Riscaldamento acceso' : 'Riscaldamento spento'));
+        tc.addEventListener('click', () => { current = 'Clima'; store.set('casa.page', current); render(); });
+        box.appendChild(tc); shown++;
+      }
+    }
     if (onSic && alarm && !open.length) {
       const c = el('button', 'chip grey'); c.innerHTML = svg('finestra');
       c.appendChild(el('span', null, 'Porte e finestre chiuse')); box.appendChild(c);
     }
     box.hidden = shown + open.length === 0 && !onSic;
     const sic = onSic ? null : list.find(p => /^sicurezza$/i.test(p.name));
-    open.forEach(it => {
+    if (!onSic && open.length) {
+      const p = open.filter(i => i.icon === 'porta').length, f = open.length - p;
+      const parts = [p && `${p} port${p > 1 ? 'e' : 'a'}`, f && `${f} finestr${f > 1 ? 'e' : 'a'}`].filter(Boolean);
+      const c = el('button', 'chip');
+      c.innerHTML = svg(f ? 'finestra' : 'porta');
+      c.appendChild(el('span', null, parts.join(' e ') + (open.length > 1 ? ' aperte' : ' aperta')));
+      c.addEventListener('click', sic ? () => { current = sic.name; store.set('casa.page', current); render(); $('pages').scrollLeft = 0; } : refreshNow);
+      box.appendChild(c);
+    }
+    if (onSic) open.forEach(it => {
       const c = el('button', 'chip');
       c.innerHTML = svg(it.icon);
       c.appendChild(el('span', null, `${it.name} · ${sensorInfo(it).text.toLowerCase()}`));
@@ -765,6 +828,18 @@ Luce | lampadina | interruttore`;
   }
 
   // Sensori: solo lettura. Mostrano il valore restituito da "Aggiorna dashboard".
+  // modalità attuale dell'allarme letta da "Aggiorna dashboard": away / night / home / off
+  function alarmMode() {
+    const raw = values['allarme'];
+    if (raw == null || raw === '') return null;
+    const v = String(raw).trim().toLowerCase();
+    if (/scatt|trigger|^4$/.test(v)) return null;
+    if (/disattiv|disarm|non attiv|^3$/.test(v)) return 'off';
+    if (/fuori|away|^1$/.test(v)) return 'away';
+    if (/nott|night|^2$/.test(v)) return 'night';
+    if (/casa|home|^0$/.test(v)) return 'home';
+    return null;
+  }
   function sensorInfo(it) {
     const raw = values[it.shortcut.toLowerCase()];
     if (raw == null || raw === '') return { text: 'Tocca ↻ per leggere', alert: false };
@@ -801,13 +876,18 @@ Luce | lampadina | interruttore`;
     if (it.room) {
       // riquadro stanza: nome + temperatura (se c'è un sensore)
       const all = parse(config).find(p => p.name === it.room);
-      const t = all && all.groups.flatMap(g => g.items).find(i => i.sensor && i.icon === 'termometro');
-      const open = all && all.groups.flatMap(g => g.items).filter(i => i.sensor && sensorInfo(i).alert).length;
-      const b = el('button', 'tile roomtile big' + (open ? ' alert' : ''));
-      const ic = el('span', 'ic'); ic.innerHTML = svg('stanza');
+      const its = all ? all.groups.flatMap(g => g.items) : [];
+      const t = its.find(i => i.sensor && i.icon === 'termometro'), u = its.find(i => i.sensor && i.icon === 'goccia');
+      const open = its.filter(i => i.sensor && sensorInfo(i).alert).length;
+      const lightsOn = its.filter(i => i.toggle && LIGHT_ICONS.includes(i.icon) && states[i.shortcut]).length;
+      const b = el('button', 'tile roomtile' + (open ? ' alert' : '') + (lightsOn ? ' lit' : ''));
+      const ic = el('span', 'ic'); ic.innerHTML = svg(it.icon || 'stanza');
       const tx = el('span', 'tx');
-      const sub = [t ? sensorInfo(t).text : '', open ? `${open} aperta` + (open > 1 ? 'e' : '') : ''].filter(x => x && !/↻/.test(x)).join(' · ');
-      tx.append(el('div', 'nm', it.room), el('div', 'st', sub));
+      const clima = [t, u].filter(Boolean).map(i => sensorInfo(i).text).filter(x => !/↻/.test(x)).join(' · ');
+      const extra = open ? `${open} apert${open > 1 ? 'e' : 'a'}` : lightsOn ? `${lightsOn} luc${lightsOn > 1 ? 'i' : 'e'} accesa`.replace('luci accesa', 'luci accese') : '';
+      tx.append(el('div', 'nm', it.room));
+      if (clima) tx.append(el('div', 'st', clima));
+      if (extra) tx.append(el('div', 'st sub2', extra));
       b.append(ic, tx);
       b.addEventListener('click', () => { current = it.room; store.set('casa.page', current); render(); $('pages').scrollLeft = 0; });
       return b;
@@ -822,11 +902,17 @@ Luce | lampadina | interruttore`;
       b.addEventListener('click', () => run({ name: 'Stati aggiornati', shortcut: 'Aggiorna dashboard', toggle: false }, null));
       return b;
     }
-    const on = it.toggle && states[it.shortcut];
+    let on = it.toggle && states[it.shortcut];
+    // tasti dell'allarme: si illumina quello della modalità attiva
+    const mode = alarmMode(), sc = (it.shortcut || '').toLowerCase();
+    const secMode = /allarme fuori casa/.test(sc) ? 'away' : /allarme notte/.test(sc) ? 'night' : /cormorano disabilitato/.test(sc) ? 'off' : null;
+    if (secMode && mode === secMode) on = true;
     const isScene = !it.toggle && it.scene;
     const isAction = !it.toggle && !isScene;
-    const b = el('button', 'tile' + (isScene ? ' scene' : '') + (isAction ? ' action' : '') + (it.big ? ' big' : '') + (on ? ' on' : ''));
+    const b = el('button', 'tile' + (isScene ? ' scene' : '') + (isAction ? ' action' : '') + (it.big ? ' big' : '') + (on ? ' on' : '') + (on && secMode ? ' sec-' + secMode : ''));
     const ic = el('span', 'ic'); ic.innerHTML = svg(it.icon);
+    if (it.emoji === '✦') b.classList.add('fun', 'magic');
+    else if (it.emoji) { ic.textContent = it.emoji; ic.classList.add('emo'); b.classList.add('fun'); }
     const tx = el('span', 'tx');
     tx.appendChild(el('div', 'nm', it.name));
     if (it.toggle) tx.appendChild(el('div', 'st', stateText(it)));
@@ -1063,7 +1149,12 @@ Luce | lampadina | interruttore`;
     $('clock').textContent = $('dclock').textContent = fmtTime.format(now);
     $('date').textContent = fmtDate.format(now);
     $('dtime').textContent = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-    if ($('dim').classList.contains('active')) drawCalendar(now);
+    if ($('dim').classList.contains('active')) {
+      drawCalendar(now);
+      // protezione OLED: sposto di poco tutto lo screensaver ogni minuto, così nessun pixel resta sempre acceso
+      const m = now.getHours() * 60 + now.getMinutes(), dx = Math.round(Math.sin(m * 0.7) * 8), dy = Math.round(Math.cos(m * 1.3) * 6);
+      document.querySelector('.sb').style.transform = `translate(${dx}px, ${dy}px)`;
+    }
   }
   // Icone meteo (stile widget Meteo di iPhone)
   const WXI = {
@@ -1153,8 +1244,18 @@ Luce | lampadina | interruttore`;
     document.documentElement.style.background = on ? '#000' : '';
     document.body.style.background = on ? '#000' : '';
   };
-  function resetIdle() { clearTimeout(idleTimer); if (opts.autoDim) idleTimer = setTimeout(() => setDim(true), 15000); }
-  $('dim').addEventListener('click', e => { e.stopPropagation(); setDim(false); resetIdle(); goFullscreen(); });
+  let lastUse = Date.now();
+  function resetIdle() { clearTimeout(idleTimer); if (!$('dim').classList.contains('active')) lastUse = Date.now(); if (opts.autoDim) idleTimer = setTimeout(() => setDim(true), 15000); }
+  // Primo tocco sullo screensaver: se il pannello non si usa da 10 minuti (o gli stati sono vecchi di 10 minuti) aggiorna tutto,
+  // altrimenti torna solo a tutto schermo. Le due cose non si fanno insieme (Comandi e tutto schermo si disturbano).
+  const REFRESH_AFTER = 10 * 60000;
+  $('dim').addEventListener('click', e => {
+    e.stopPropagation();
+    const idle = Date.now() - lastUse, stale = Date.now() - store.get('casa.lastRefresh', 0);
+    setDim(false); resetIdle(); lastUse = Date.now();
+    if (idle >= REFRESH_AFTER || stale >= REFRESH_AFTER) refreshNow();
+    else goFullscreen();
+  });
   ['pointerdown', 'touchstart'].forEach(ev => document.addEventListener(ev, resetIdle, { passive: true }));
 
   // Tutto schermo: funziona se il browser lo permette (su iPhone serve la flag
