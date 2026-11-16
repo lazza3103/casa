@@ -502,6 +502,9 @@ Luce | lampadina | interruttore`;
 
   let config = store.get('casa.config.v2', DEFAULT_CONFIG);
   if (store.get('casa.edited', false) !== true) config = DEFAULT_CONFIG;
+  // aggiornamento a distanza: il gruppo dei pulsanti allarme in Casa si chiama "Allarme"
+  { const m = config.replace(/^(= Casa\s*\n## )(Sicurezza|Chi siete\? Cosa portate\? Un fiorino!)(\s*\nSalvio Hexia)/m, '$1Allarme$3');
+    if (m !== config) { config = m; store.set('casa.config.v2', config); } }
   let states = store.get('casa.states.v2', {});
   let values = store.get('casa.values', {});
   let opts = store.get('casa.opts', { autoReturn: true, autoDim: true });
