@@ -253,6 +253,15 @@
   .wxicon svg { width: clamp(30px, 12vh, 68px); height: clamp(30px, 12vh, 68px); }
   .wxdesc { font-size: clamp(14px, 4.5vh, 21px); font-weight: 600; margin-top: 4px; }
   .wxhl { font-size: clamp(12px, 3.6vh, 17px); color: rgba(255,255,255,.65); margin-top: 2px; }
+  .wxsun { font-size: clamp(11px, 3.2vh, 15px); color: rgba(255,255,255,.5); margin-top: 2px; }
+  /* Riepilogo della giornata (mattina, pomeriggio, sera) */
+  .sum { background: rgba(40,40,44,.94); border-radius: 26px; padding: 22px 26px 18px; width: min(560px, 90vw); }
+  .sum .pt { font-size: 22px; font-weight: 700; margin-bottom: 12px; }
+  .sumrow { display: flex; align-items: center; gap: 12px; padding: 7px 0; font-size: 16px; line-height: 1.3; border-top: 1px solid rgba(255,255,255,.08); }
+  .sumrow:first-of-type { border-top: 0; }
+  .sumrow svg { font-size: 20px; flex: none; color: var(--accent); }
+  .sumrow.warn svg, .sumrow.warn b { color: #ff9f0a; }
+  .sum .row { display: flex; justify-content: flex-end; margin-top: 12px; }
   .wxhours { flex: none; display: flex; justify-content: space-between; gap: 6px; border-top: 1px solid rgba(255,255,255,.15); padding-top: 12px; }
   .wxh { text-align: center; font-size: 13px; color: rgba(255,255,255,.7); flex: 1; }
   .wxh svg { width: 24px; height: 24px; display: block; margin: clamp(2px, 1.2vh, 6px) auto; }
@@ -366,7 +375,7 @@
       <div class="sbw sbwx" id="sbwx">
         <div class="wxtop">
           <div><div class="wxcity" id="wxcity">Meteo</div><div class="wxtemp" id="wxtemp">--°</div></div>
-          <div class="wxnow"><span class="wxicon" id="wxicon"></span><div class="wxdesc" id="wxdesc">Imposta la città in ⚙︎</div><div class="wxhl" id="wxhl"></div></div>
+          <div class="wxnow"><span class="wxicon" id="wxicon"></span><div class="wxdesc" id="wxdesc">Imposta la città in ⚙︎</div><div class="wxhl" id="wxhl"></div><div class="wxsun" id="wxsun"></div></div>
         </div>
         <div class="wxhours" id="wxhours"></div>
       </div>
@@ -375,6 +384,9 @@
 </div>
 <div class="toast" id="toast"></div>
 
+<div class="pin-bg" id="sumBg">
+  <div class="sum"><div class="pt" id="sumTitle"></div><div id="sumBody"></div><div class="row"><button class="btn" id="sumClose">Chiudi</button></div></div>
+</div>
 <div class="pin-bg" id="askBg">
   <div class="ask">
     <div class="pt" id="askTitle"></div>
@@ -491,6 +503,7 @@
     vasca: '<path d="M3 12h18v2.5a4.5 4.5 0 0 1-4.5 4.5h-9A4.5 4.5 0 0 1 3 14.5z"/><path d="M6 12V6a2 2 0 0 1 3.6-1.2"/><path d="M7 19l-1 2M17 19l1 2"/>',
     cucina: '<path d="M4.5 10h15v6.5A3.5 3.5 0 0 1 16 20H8a3.5 3.5 0 0 1-3.5-3.5z"/><path d="M2 12h2.5M19.5 12H22M9.5 7.5h5"/><path d="M9.5 2.8c-.6.8.6 1.5 0 2.4M14.5 2.8c-.6.8.6 1.5 0 2.4"/>',
     corridoio: '<path d="M3 4h18M7.5 4v2M16.5 4v2"/><path d="M5 10.5l2.5-4.5 2.5 4.5zM14 10.5l2.5-4.5 2.5 4.5z"/><path d="M5.5 14l-1.2 4M9.5 14l1.2 4M14.5 14l-1.2 4M18.5 14l1.2 4"/>',
+    aria: '<path d="M3 8.5h11a3 3 0 1 0-3-3M3 12.5h15.5a3 3 0 1 1-3 3M3 16.5h7"/>',
     stanza: '<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M12 20.5V16a4 4 0 0 1 4-4h4.5"/>',
     ingranaggio: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'
   };
@@ -526,8 +539,8 @@ Luce | lampadina | interruttore`;
   const $ = id => document.getElementById(id);
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 
-  const BUILD = '84709e018b'; // cambia a ogni versione pubblicata: serve al pannello per accorgersi degli aggiornamenti
-  let rainSoon = false, alarmShownFor = null, askCb = null, lastUpdateCheck = Date.now();
+  const BUILD = 'e1691b88a1'; // cambia a ogni versione pubblicata: serve al pannello per accorgersi degli aggiornamenti
+  let rainSoon = false, alarmShownFor = null, askCb = null, lastUpdateCheck = Date.now(), wxData = null, airData = null;
   let config = store.get('casa.config.v2', DEFAULT_CONFIG);
   if (store.get('casa.edited', false) !== true) config = DEFAULT_CONFIG;
   // aggiornamento a distanza: il gruppo dei pulsanti allarme in Casa si chiama "Allarme"
@@ -602,8 +615,28 @@ Luce | lampadina | interruttore`;
     return { casa: 'casa', scene: 'scene', sicurezza: 'scudo', pulizia: 'robot', luci: 'lampadina', clima: 'clima' }[name.toLowerCase()] || 'stanza';
   }
 
+  // Registro del riscaldamento: segno quando il termostato risulta acceso o spento (per contare le ore)
+  function thermoItem() { return parse(config).flatMap(p => p.groups.flatMap(g => g.items)).find(i => i.toggle && i.icon === 'termometro'); }
+  function noteHeat() {
+    const t = thermoItem(); if (!t) return;
+    const on = !!states[t.shortcut], now = Date.now();
+    const h = store.get('casa.heat', { on: false, since: 0, log: [] });
+    if (on && !h.on) { h.on = true; h.since = now; }
+    else if (!on && h.on) { h.log.push([h.since, now]); h.on = false; h.since = 0; }
+    else return;
+    h.log = h.log.filter(x => x[1] > now - 3 * 86400000);
+    store.set('casa.heat', h);
+  }
+  // minuti di riscaldamento acceso tra "da" e "a"
+  function heatMinutes(from, to) {
+    const h = store.get('casa.heat', { on: false, since: 0, log: [] });
+    const iv = h.log.slice(); if (h.on) iv.push([h.since, Date.now()]);
+    return Math.round(iv.reduce((t, [a, b]) => t + Math.max(0, Math.min(b, to) - Math.max(a, from)), 0) / 60000);
+  }
+  const fmtDur = m => m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? ' ' + (m % 60) + ' min' : ''}`;
   function render() {
     setTimeout(checkAlarm, 0);
+    noteHeat();
     const { top, rooms } = allPages();
     // Pagina "Stanze": un riquadro grande per stanza (così la barra laterale non deve mai scorrere)
     // le stanze si aprono dalla pagina Casa (tessere stanza), niente voce separata nella barra
@@ -795,7 +828,8 @@ Luce | lampadina | interruttore`;
       box.appendChild(lc); shown++;
       if (thermo) {
         const tc = el('button', 'chip ' + (states[thermo.shortcut] ? 'yellow' : 'grey')); tc.innerHTML = svg('termometro');
-        tc.appendChild(el('span', null, states[thermo.shortcut] ? 'Riscaldamento acceso' : 'Riscaldamento spento'));
+        const hs = store.get('casa.heat', {}).since, dur = states[thermo.shortcut] && hs ? Math.round((Date.now() - hs) / 60000) : 0;
+        tc.appendChild(el('span', null, states[thermo.shortcut] ? (dur >= 5 ? `Riscaldamento acceso da ${fmtDur(dur)}` : 'Riscaldamento acceso') : 'Riscaldamento spento'));
         tc.addEventListener('click', () => { current = 'Clima'; store.set('casa.page', current); render(); });
         box.appendChild(tc); shown++;
       }
@@ -803,6 +837,14 @@ Luce | lampadina | interruttore`;
       const win = open.filter(i => i.icon === 'finestra').length;
       const warn = (icon, text, go) => { const c = el('button', 'chip red'); c.innerHTML = svg(icon); c.appendChild(el('span', null, text)); c.addEventListener('click', go || refreshNow); box.prepend(c); shown++; };
       if (rainSoon && win) warn('goccia', `Pioggia in arrivo, ${win > 1 ? win + ' finestre aperte' : 'finestra aperta'}`);
+      // umidità alta (solo avviso): tocco → apre la stanza
+      for (const r of highHumidity()) warn('goccia', `Umidità alta: ${r.room} ${r.val}%`, () => { current = r.room; store.set('casa.page', current); render(); $('pages').scrollLeft = 0; });
+      // aria esterna scarsa: tocco → purificatore in automatico
+      if (airData && airData.aqi >= 60) {
+        const pur = all.find(i => /purificatore in auto/i.test(i.shortcut || ''));
+        warn('aria', `Aria esterna ${aqiText(airData.aqi)}${win ? ', chiudi le finestre' : ''}`, pur ? () => run(pur, null) : refreshNow);
+      }
+      if (airData && airData.pollen >= 50) warn('stelle', 'Pollini alti');
       if (thermo && states[thermo.shortcut] && win) warn('fiamma', `Riscaldamento acceso con ${win > 1 ? 'finestre aperte' : 'finestra aperta'}`);
       if (robot && /bloccat|error|stuck|problem|puliz|clean|in corso/i.test(robot)) {
         const c = el('button', 'chip ' + (/bloccat|error|stuck|problem/i.test(robot) ? 'red' : 'yellow')); c.innerHTML = svg('robot');
@@ -876,6 +918,16 @@ Luce | lampadina | interruttore`;
   }
 
   // Sensori: solo lettura. Mostrano il valore restituito da "Aggiorna dashboard".
+  // stanze con umidità sopra il 75%
+  function highHumidity() {
+    const out = [];
+    for (const pg of parse(config)) for (const g of pg.groups) for (const i of g.items) {
+      if (!i.sensor || i.icon !== 'goccia') continue;
+      const v = parseFloat(String(values[i.shortcut.toLowerCase()] ?? '').replace(',', '.'));
+      if (v > 75 && !out.some(o => o.room === pg.name)) out.push({ room: pg.name, val: Math.round(v) });
+    }
+    return out;
+  }
   // porte e finestre aperte secondo l'ultimo aggiornamento (senza doppioni)
   function openSensors() {
     const seen = new Map();
@@ -1027,7 +1079,7 @@ Luce | lampadina | interruttore`;
   const baseUrl = () => location.origin + location.pathname;
   function run(it, btn) {
     const am = /allarme fuori casa/i.test(it.shortcut) ? 'Fuori casa' : /allarme notte/i.test(it.shortcut) ? 'Notte' : /cormorano disabilitato/i.test(it.shortcut) ? 'Disattivato' : null;
-    if (am) { values['allarme'] = am; store.set('casa.values', values); store.set('casa.armedAt', Date.now()); }
+    if (am) { values['allarme'] = am; store.set('casa.values', values); store.set('casa.armedAt', Date.now()); if (am === 'Disattivato') queueSummary(); }
     if (it.toggle) { states[it.shortcut] = !states[it.shortcut]; store.set('casa.states.v2', states); }
     if (btn) btn.classList.add('flash');
     const name = encodeURIComponent(it.shortcut);
@@ -1271,6 +1323,19 @@ Luce | lampadina | interruttore`;
           const m = part.match(/^\s*(.+?)\s*=\s*(.+?)\s*$/); if (!m) return;
           sens.filter(i => i.shortcut.toLowerCase() === m[1] || i.name.toLowerCase() === m[1]).forEach(i => { values[i.shortcut.toLowerCase()] = m[2]; n++; });
         });
+        msg.split(/[\n;]+/).forEach(part => {
+          const m = part.match(/^\s*allarme\s*=\s*(.+?)\s*$/); if (!m) return;
+          values['allarme'] = m[1]; store.set('casa.values', values); n++;
+          if (alarmMode() === 'off' && $('pinBg').classList.contains('alarm')) closePin(); // disattivato altrove: tolgo la richiesta del codice
+          if (alarmMode() === 'off' && !$('pinBg').classList.contains('open') && queueSummary()) showSummary();
+        });
+        const t = thermoItem();
+        msg.split(/[\n;]+/).forEach(part => {
+          const m = part.match(/^\s*(.+?)\s*=\s*(.+?)\s*$/); if (!m || !t) return;
+          if (m[1] !== t.name.toLowerCase() && m[1] !== t.shortcut.toLowerCase()) return;
+          const v = readBool(m[2]); if (v === null) return;
+          states[t.shortcut] = v; store.set('casa.states.v2', states); n++;
+        });
         if (n) { store.set('casa.values', values); render(); drawOpenings(); }
         return;
       }
@@ -1340,10 +1405,24 @@ Luce | lampadina | interruttore`;
     51: 'Pioviggine', 53: 'Pioviggine', 55: 'Pioviggine', 61: 'Pioggia debole', 63: 'Pioggia', 65: 'Pioggia forte',
     66: 'Pioggia gelata', 67: 'Pioggia gelata', 71: 'Neve debole', 73: 'Neve', 75: 'Neve forte', 77: 'Nevischio',
     80: 'Rovesci', 81: 'Rovesci', 82: 'Rovesci forti', 85: 'Neve', 86: 'Neve', 95: 'Temporale', 96: 'Temporale', 99: 'Temporale' };
+  // qualità dell'aria e pollini (stesso servizio del meteo)
+  async function loadAir() {
+    if (!place) return;
+    try {
+      const a = await (await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${place.lat}&longitude=${place.lon}&current=european_aqi,alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen&timezone=auto`)).json();
+      const c = a.current || {};
+      const pol = Math.max(0, ...['alder_pollen', 'birch_pollen', 'grass_pollen', 'mugwort_pollen', 'olive_pollen', 'ragweed_pollen'].map(k => c[k] || 0));
+      const before = JSON.stringify(airData);
+      airData = { aqi: c.european_aqi, pollen: pol };
+      if (JSON.stringify(airData) !== before) render();
+    } catch {}
+  }
+  const aqiText = q => q == null ? '' : q < 20 ? 'buona' : q < 40 ? 'discreta' : q < 60 ? 'moderata' : q < 80 ? 'scarsa' : 'pessima';
   async function loadWeather() {
     if (!place) { $('wx').textContent = ''; return; }
     try {
-      const d = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}&current=temperature_2m,weather_code,is_day&hourly=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=2`)).json();
+      const d = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}&current=temperature_2m,weather_code,is_day&hourly=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=auto&forecast_days=2`)).json();
+      wxData = d;
       const t = Math.round(d.current.temperature_2m), code = d.current.weather_code, night = d.current.is_day === 0;
       const desc = WMO[code] || '';
       $('wx').textContent = ` · ${t}° ${desc}`;
@@ -1353,6 +1432,8 @@ Luce | lampadina | interruttore`;
       $('wxicon').innerHTML = wxSvg(wxKind(code, night));
       $('wxdesc').textContent = desc;
       if (d.daily) $('wxhl').textContent = `Max ${Math.round(d.daily.temperature_2m_max[0])}°  Min ${Math.round(d.daily.temperature_2m_min[0])}°`;
+      if (d.daily && d.daily.sunrise) $('wxsun').textContent = `Alba ${String(d.daily.sunrise[0]).slice(11, 16)} · Tramonto ${String(d.daily.sunset[0]).slice(11, 16)}`;
+      loadAir();
       const kind = wxKind(code, night);
 
       if (d.hourly) {
@@ -1401,7 +1482,50 @@ Luce | lampadina | interruttore`;
     document.body.style.background = on ? '#000' : '';
   };
   let lastUse = Date.now();
-  function resetIdle() { clearTimeout(idleTimer); if (!$('dim').classList.contains('active')) lastUse = Date.now(); if (opts.autoDim) idleTimer = setTimeout(() => { if ($('pinBg').classList.contains('open') || $('askBg').classList.contains('open')) return resetIdle(); setDim(true); }, 15000); }
+  function resetIdle() { clearTimeout(idleTimer); if (!$('dim').classList.contains('active')) lastUse = Date.now(); if (opts.autoDim) idleTimer = setTimeout(() => { if ($('pinBg').classList.contains('open') || $('askBg').classList.contains('open') || $('sumBg').classList.contains('open')) return resetIdle(); setDim(true); }, 15000); }
+  // Riepilogo della giornata: al primo tocco dopo le 6, dopo le 13 e dopo le 21 (una volta per fascia)
+  function summarySlot(d = new Date()) {
+    const h = d.getHours(), day = d.toDateString(), at = (dd, hh) => { const x = new Date(dd); x.setHours(hh, 0, 0, 0); return x.getTime(); };
+    if (h >= 21) return { key: day + 's', title: 'Buonasera', label: 'Oggi pomeriggio', from: at(d, 13) };
+    if (h >= 13) return { key: day + 'p', title: 'Buon pomeriggio', label: 'Stamattina', from: at(d, 6) };
+    if (h >= 6) { const y = new Date(d); y.setDate(y.getDate() - 1); return { key: day + 'm', title: 'Buongiorno', label: 'Stanotte', from: at(y, 21) }; }
+    return null;
+  }
+  // segna il riepilogo della fascia attuale da mostrare (se non è già stato visto)
+  function queueSummary() {
+    const sl = summarySlot();
+    if (sl && store.get('casa.summaryDone', null) !== sl.key) { store.set('casa.summaryPending', sl.key); return true; }
+    return false;
+  }
+  function showSummary() {
+    const sl = summarySlot(); if (!sl) return;
+    store.set('casa.summaryDone', sl.key); store.set('casa.summaryPending', null);
+    const rows = [], row = (icon, html, warn) => rows.push(`<div class="sumrow${warn ? ' warn' : ''}">${icon.startsWith('<') ? icon : svg(icon)}<span>${html}</span></div>`);
+    const esc = t => String(t).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+    if (wxData && wxData.current) {
+      const d = wxData, now = new Date(); now.setMinutes(0, 0, 0);
+      let txt = `${Math.round(d.current.temperature_2m)}° adesso · max ${Math.round(d.daily.temperature_2m_max[0])}° min ${Math.round(d.daily.temperature_2m_min[0])}°`;
+      const i0 = Math.max(0, d.hourly.time.findIndex(x => new Date(x) >= now));
+      const end = new Date(now); end.setHours(23, 59);
+      const ir = d.hourly.time.findIndex((x, j) => j >= i0 && new Date(x) <= end && ((d.hourly.weather_code[j] >= 51 && d.hourly.weather_code[j] <= 67) || (d.hourly.weather_code[j] >= 80 && d.hourly.weather_code[j] <= 82) || d.hourly.weather_code[j] >= 95));
+      txt += ir >= 0 ? ` · <b>pioggia dalle ${new Date(d.hourly.time[ir]).getHours()}</b>` : ' · niente pioggia';
+      row(wxSvg(wxKind(d.current.weather_code, d.current.is_day === 0)).replace('<svg ', '<svg class="i" '), txt, ir >= 0);
+    }
+    if (airData && airData.aqi != null) row('aria', `Aria esterna ${airData.aqi >= 60 ? '<b>' + aqiText(airData.aqi) + '</b>' : aqiText(airData.aqi)}${airData.pollen >= 50 ? ' · <b>pollini alti</b>' : ''}`, airData.aqi >= 60 || airData.pollen >= 50);
+    const op = openSensors();
+    row(op.length ? op[0].icon : 'finestra', op.length ? `<b>${op.length} apert${op.length > 1 ? 'e' : 'a'}</b>: ${esc(op.map(i => i.name).join(', '))}` : 'Porte e finestre chiuse', op.length > 0);
+    if (thermoItem()) { const m = heatMinutes(sl.from, Date.now()); row('fiamma', `${sl.label} il riscaldamento è stato ${m ? 'acceso <b>' + fmtDur(m) + '</b>' : 'spento'}`); }
+    for (const r of highHumidity()) row('goccia', `Umidità alta: ${esc(r.room)} <b>${r.val}%</b>`, true);
+    $('sumTitle').textContent = sl.title;
+    $('sumBody').innerHTML = rows.join('');
+    $('sumBg').classList.add('open');
+    clearTimeout(showSummary.t); showSummary.t = setTimeout(closeSummary, 25000);
+  }
+  const closeSummary = () => $('sumBg').classList.remove('open');
+  $('sumClose').addEventListener('click', closeSummary);
+  $('sumBg').addEventListener('click', e => { if (e.target === $('sumBg')) closeSummary(); });
+  // dopo un aggiornamento (la pagina si ricarica) mostro il riepilogo in attesa, con i dati freschi
+  setTimeout(() => { const sl = summarySlot(); if (sl && store.get('casa.summaryPending', null) === sl.key && !$('pinBg').classList.contains('open')) showSummary(); }, 1500);
   // Primo tocco sullo screensaver: se il pannello non si usa da un'ora (o gli stati sono vecchi di un'ora) aggiorna tutto,
   // altrimenti torna solo a tutto schermo. Le due cose non si fanno insieme (Comandi e tutto schermo si disturbano).
   const REFRESH_AFTER = 60 * 60000; // un'ora
@@ -1410,9 +1534,11 @@ Luce | lampadina | interruttore`;
     const idle = Date.now() - lastUse, stale = Date.now() - store.get('casa.lastRefresh', 0);
     setDim(false); resetIdle(); lastUse = Date.now();
     // allarme "fuori casa": chi tocca il pannello sta entrando, chiedo subito codice o Face ID
+    const sl = summarySlot(), due = sl && store.get('casa.summaryDone', null) !== sl.key;
+    if (due) store.set('casa.summaryPending', sl.key);
     if (alarmMode() === 'away' && promptDisarm('Allarme inserito', 'tap' + Date.now())) return;
-    if (idle >= REFRESH_AFTER || stale >= REFRESH_AFTER) refreshNow();
-    else goFullscreen();
+    if (idle >= REFRESH_AFTER || stale >= REFRESH_AFTER) refreshNow(); // il riepilogo compare al ritorno, con i dati nuovi
+    else { goFullscreen(); if (due) showSummary(); }
   });
   ['pointerdown', 'touchstart'].forEach(ev => document.addEventListener(ev, resetIdle, { passive: true }));
 
