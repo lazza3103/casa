@@ -233,8 +233,15 @@
   .calday { text-align: center; line-height: 1; }
   .calwd { color: #ff453a; font-size: 17px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
   .calnum { font-size: clamp(38px, 14vh, 62px); font-weight: 300; letter-spacing: -2px; margin-top: 4px; }
-  .calmonth { font-size: 26px; font-weight: 700; text-transform: capitalize; }
-  .calyear { font-size: 17px; color: rgba(255,255,255,.5); margin-top: 4px; }
+  .calmon { font-size: 15px; font-weight: 700; letter-spacing: 1px; color: rgba(255,255,255,.5); margin-top: 4px; }
+  .sbtop { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; }
+  .sbtop .sbcal { justify-content: center; padding: 0; width: clamp(96px, 32vh, 140px); height: clamp(96px, 32vh, 140px); }
+  .sbopen { display: flex; flex-direction: column; justify-content: center; padding: 0 24px; min-width: 0; }
+  .optitle { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: rgba(255,255,255,.6); }
+  .optitle svg { font-size: 18px; }
+  .opval { font-size: clamp(22px, 8vh, 34px); font-weight: 700; margin-top: 4px; }
+  .opsub { font-size: 14px; color: rgba(255,255,255,.55); margin-top: 2px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .sbopen.alert .opval, .sbopen.alert .optitle { color: #ff9f0a; }
   .sbwx { min-height: 0; display: flex; flex-direction: column; justify-content: space-between; padding: clamp(10px, 3.5vh, 16px) 22px clamp(10px, 4vh, 18px);
           background: #161618; }
   /* sopra la linea: metà sinistra città e temperatura, metà destra icona e descrizione, tutto lo spazio usato */
@@ -252,6 +259,18 @@
   .wxhours { padding-top: clamp(6px, 2.5vh, 12px) !important; }
   .wxh b { font-size: 15px; color: rgba(255,255,255,.9); font-weight: 600; }
 
+  /* Allarme scattato: stessa schermata del codice, in rosso */
+  .pin-bg.alarm { background: rgba(150,0,0,.78); }
+  .pin-bg.alarm .pt { font-size: 26px; font-weight: 800; }
+  .pin-bg.alarm .ps { color: #ffd0cc; }
+  /* Conferma prima di inserire l'allarme con aperture */
+  .ask { background: rgba(40,40,44,.92); border-radius: 26px; padding: 24px 26px; max-width: min(460px, 86vw); text-align: center; }
+  .ask .pt { font-size: 19px; font-weight: 700; margin-bottom: 8px; }
+  .ask .ps { font-size: 15px; color: var(--muted); line-height: 1.4; margin-bottom: 18px; }
+  .ask .row { display: flex; gap: 12px; justify-content: center; }
+  .ask .btn.warn { background: #ff3b30; color: #fff; }
+  /* Screensaver notturno: tutto rosso scuro e tenue (come StandBy di notte) */
+  .dim.night .sb { filter: brightness(.55) sepia(1) saturate(12) hue-rotate(-38deg) brightness(.5); }
   /* Tastierino codice */
   .tile .lock { position: absolute; top: 9px; right: 11px; font-size: 14px; opacity: .55; }
   .pin-bg { position: fixed; inset: 0; z-index: 50; display: none; place-items: center; background: rgba(0,0,0,.55); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); }
@@ -340,9 +359,9 @@
   <div class="sb">
     <div class="sbw sbclock"><svg class="ring" viewBox="0 0 200 200" aria-hidden="true"><line x1="100.0" y1="17.0" x2="100.0" y2="8.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="109.1" y1="13.0" x2="109.7" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="118.5" y1="12.9" x2="119.6" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="128.3" y1="12.8" x2="129.9" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="138.9" y1="12.6" x2="141.0" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="148.6" y1="15.8" x2="153.1" y2="8.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="163.9" y1="12.0" x2="166.8" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="179.5" y1="11.7" x2="182.8" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="188.3" y1="20.5" x2="192.0" y2="17.2" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="188.0" y1="36.1" x2="192.0" y2="33.2" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="184.2" y1="51.4" x2="192.0" y2="46.9" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="187.4" y1="61.1" x2="192.0" y2="59.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.2" y1="71.7" x2="192.0" y2="70.1" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.1" y1="81.5" x2="192.0" y2="80.4" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.0" y1="90.9" x2="192.0" y2="90.3" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="183.0" y1="100.0" x2="192.0" y2="100.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="187.0" y1="109.1" x2="192.0" y2="109.7" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.1" y1="118.5" x2="192.0" y2="119.6" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.2" y1="128.3" x2="192.0" y2="129.9" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.4" y1="138.9" x2="192.0" y2="141.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="184.2" y1="148.6" x2="192.0" y2="153.1" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="188.0" y1="163.9" x2="192.0" y2="166.8" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="188.3" y1="179.5" x2="192.0" y2="182.8" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="179.5" y1="188.3" x2="182.8" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="163.9" y1="188.0" x2="166.8" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="148.6" y1="184.2" x2="153.1" y2="192.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="138.9" y1="187.4" x2="141.0" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="128.3" y1="187.2" x2="129.9" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="118.5" y1="187.1" x2="119.6" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="109.1" y1="187.0" x2="109.7" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="100.0" y1="183.0" x2="100.0" y2="192.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="90.9" y1="187.0" x2="90.3" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="81.5" y1="187.1" x2="80.4" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="71.7" y1="187.2" x2="70.1" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="61.1" y1="187.4" x2="59.0" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="51.4" y1="184.2" x2="46.9" y2="192.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="36.1" y1="188.0" x2="33.2" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="20.5" y1="188.3" x2="17.2" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="11.7" y1="179.5" x2="8.0" y2="182.8" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.0" y1="163.9" x2="8.0" y2="166.8" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="15.8" y1="148.6" x2="8.0" y2="153.1" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="12.6" y1="138.9" x2="8.0" y2="141.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.8" y1="128.3" x2="8.0" y2="129.9" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.9" y1="118.5" x2="8.0" y2="119.6" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="13.0" y1="109.1" x2="8.0" y2="109.7" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="17.0" y1="100.0" x2="8.0" y2="100.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="13.0" y1="90.9" x2="8.0" y2="90.3" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.9" y1="81.5" x2="8.0" y2="80.4" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.8" y1="71.7" x2="8.0" y2="70.1" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.6" y1="61.1" x2="8.0" y2="59.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="15.8" y1="51.4" x2="8.0" y2="46.9" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="12.0" y1="36.1" x2="8.0" y2="33.2" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="11.7" y1="20.5" x2="8.0" y2="17.2" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="20.5" y1="11.7" x2="17.2" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="36.1" y1="12.0" x2="33.2" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="51.4" y1="15.8" x2="46.9" y2="8.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="61.1" y1="12.6" x2="59.0" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="71.7" y1="12.8" x2="70.1" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="81.5" y1="12.9" x2="80.4" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="90.9" y1="13.0" x2="90.3" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/></svg><div class="dclock" id="dclock"></div><div class="dtime" id="dtime"></div></div>
     <div class="sbcol">
-      <div class="sbw sbcal">
-        <div class="calday"><div class="calwd" id="calwd"></div><div class="calnum" id="calnum"></div></div>
-        <div class="calinfo"><div class="calmonth" id="calmonth"></div><div class="calyear" id="calyear"></div></div>
+      <div class="sbtop">
+        <div class="sbw sbcal"><div class="calday"><div class="calwd" id="calwd"></div><div class="calnum" id="calnum"></div><div class="calmon" id="calmon"></div></div></div>
+        <div class="sbw sbopen" id="sbopen"></div>
       </div>
       <div class="sbw sbwx" id="sbwx">
         <div class="wxtop">
@@ -356,6 +375,13 @@
 </div>
 <div class="toast" id="toast"></div>
 
+<div class="pin-bg" id="askBg">
+  <div class="ask">
+    <div class="pt" id="askTitle"></div>
+    <div class="ps" id="askText"></div>
+    <div class="row"><button class="btn" id="askNo">Annulla</button><button class="btn warn" id="askYes">Inserisci comunque</button></div>
+  </div>
+</div>
 <div class="pin-bg" id="pinBg">
   <div class="pin" id="pinBox">
     <div class="pinleft">
@@ -500,6 +526,8 @@ Luce | lampadina | interruttore`;
   const $ = id => document.getElementById(id);
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 
+  const BUILD = '84709e018b'; // cambia a ogni versione pubblicata: serve al pannello per accorgersi degli aggiornamenti
+  let rainSoon = false, alarmShownFor = null, askCb = null, lastUpdateCheck = Date.now();
   let config = store.get('casa.config.v2', DEFAULT_CONFIG);
   if (store.get('casa.edited', false) !== true) config = DEFAULT_CONFIG;
   // aggiornamento a distanza: il gruppo dei pulsanti allarme in Casa si chiama "Allarme"
@@ -575,6 +603,7 @@ Luce | lampadina | interruttore`;
   }
 
   function render() {
+    setTimeout(checkAlarm, 0);
     const { top, rooms } = allPages();
     // Pagina "Stanze": un riquadro grande per stanza (così la barra laterale non deve mai scorrere)
     // le stanze si aprono dalla pagina Casa (tessere stanza), niente voce separata nella barra
@@ -729,6 +758,12 @@ Luce | lampadina | interruttore`;
       updateRefreshHints();
       return;
     }
+    const robot = values['melisso'];
+    if (page && /^pulizia$/i.test(page.name)) {
+      if (robot) { const c = el('button', 'chip ' + (/bloccat|error|stuck|problem/i.test(robot) ? 'red' : /puliz|clean|in corso/i.test(robot) ? 'yellow' : 'grey'));
+        c.innerHTML = svg('robot'); c.appendChild(el('span', null, 'Melisso · ' + String(robot).toLowerCase())); c.addEventListener('click', refreshNow); box.appendChild(c); }
+      box.hidden = !robot; return;
+    }
     if (!page || !/^(casa|sicurezza)$/i.test(page.name)) { box.hidden = true; return; }
     const onSic = /^sicurezza$/i.test(page.name);
     const all = list.flatMap(pg => pg.groups.flatMap(g => g.items));
@@ -763,6 +798,16 @@ Luce | lampadina | interruttore`;
         tc.appendChild(el('span', null, states[thermo.shortcut] ? 'Riscaldamento acceso' : 'Riscaldamento spento'));
         tc.addEventListener('click', () => { current = 'Clima'; store.set('casa.page', current); render(); });
         box.appendChild(tc); shown++;
+      }
+      // avvisi intelligenti, in rosso e per primi
+      const win = open.filter(i => i.icon === 'finestra').length;
+      const warn = (icon, text, go) => { const c = el('button', 'chip red'); c.innerHTML = svg(icon); c.appendChild(el('span', null, text)); c.addEventListener('click', go || refreshNow); box.prepend(c); shown++; };
+      if (rainSoon && win) warn('goccia', `Pioggia in arrivo, ${win > 1 ? win + ' finestre aperte' : 'finestra aperta'}`);
+      if (thermo && states[thermo.shortcut] && win) warn('fiamma', `Riscaldamento acceso con ${win > 1 ? 'finestre aperte' : 'finestra aperta'}`);
+      if (robot && /bloccat|error|stuck|problem|puliz|clean|in corso/i.test(robot)) {
+        const c = el('button', 'chip ' + (/bloccat|error|stuck|problem/i.test(robot) ? 'red' : 'yellow')); c.innerHTML = svg('robot');
+        c.appendChild(el('span', null, 'Melisso · ' + String(robot).toLowerCase()));
+        c.addEventListener('click', () => { current = 'Pulizia'; store.set('casa.page', current); render(); }); box.appendChild(c); shown++;
       }
     }
     if (onSic && alarm && !open.length) {
@@ -831,6 +876,51 @@ Luce | lampadina | interruttore`;
   }
 
   // Sensori: solo lettura. Mostrano il valore restituito da "Aggiorna dashboard".
+  // porte e finestre aperte secondo l'ultimo aggiornamento (senza doppioni)
+  function openSensors() {
+    const seen = new Map();
+    for (const pg of parse(config)) for (const g of pg.groups) for (const i of g.items) {
+      if (!i.sensor || !['finestra', 'porta'].includes(i.icon)) continue;
+      const k = i.shortcut.toLowerCase();
+      if (!seen.has(k) || i.name.length > seen.get(k).name.length) seen.set(k, i);
+    }
+    return [...seen.values()].filter(i => sensorInfo(i).alert);
+  }
+  function askArm(it, btn, op) {
+    if (isFullscreen()) exitFullscreen();
+    const n = op.length, age = Math.round((Date.now() - store.get('casa.lastRefresh', 0)) / 60000);
+    $('askTitle').textContent = n > 1 ? `Ci sono ${n} aperture` : (op[0].icon === 'porta' ? 'C’è una porta aperta' : 'C’è una finestra aperta');
+    $('askText').textContent = op.map(i => i.name).join(', ') + (age > 1 && age < 600 ? ` (dati di ${age} min fa)` : '') + '. Inserire comunque l’allarme?';
+    askCb = () => it.code ? askPin(`Codice per “${it.name}”`, () => run(it, btn)) : run(it, btn);
+    $('askBg').classList.add('open');
+  }
+  const closeAsk = () => { $('askBg').classList.remove('open'); askCb = null; };
+  $('askNo').addEventListener('click', closeAsk);
+  $('askBg').addEventListener('click', e => { if (e.target === $('askBg')) closeAsk(); });
+  $('askYes').addEventListener('click', () => { const c = askCb; closeAsk(); c && c(); });
+  // allarme scattato (letto da "Aggiorna dashboard"): schermata rossa con tastierino e Face ID per disattivarlo
+  function checkAlarm() {
+    const raw = values['allarme'];
+    const trig = raw != null && /scatt|trigger|^4$/.test(String(raw).trim().toLowerCase());
+    const mode = alarmMode();
+    // ingresso: allarme fuori casa e portoncino aperto (c'è il ritardo d'ingresso)
+    const door = openSensors().some(i => /portoncino|ingresso/i.test(i.name + ' ' + i.shortcut));
+    // (solo con dati letti dopo l'inserimento: se lo inserisco dal pannello con la porta aperta non mi blocca subito)
+    const armedEntry = mode === 'away' && door && store.get('casa.lastRefresh', 0) > store.get('casa.armedAt', 0);
+    if (!trig && !armedEntry) { alarmShownFor = null; return; }
+    promptDisarm(trig ? 'Allarme scattato!' : 'Allarme inserito', String(raw) + store.get('casa.lastRefresh', 0));
+  }
+  function promptDisarm(title, key) {
+    if (alarmShownFor === key || $('pinBg').classList.contains('open') || (!pin && !faceId)) return false;
+    const dis = parse(config).flatMap(p => p.groups.flatMap(g => g.items)).find(i => /cormorano disabilitato/i.test(i.shortcut || ''));
+    if (!dis) return false;
+    alarmShownFor = key;
+    if ($('dim').classList.contains('active')) setDim(false);
+    $('pinBg').classList.add('alarm');
+    askPin(title, () => run(dis, null));
+    $('pinSub').textContent = 'Inserisci il codice o usa il Face ID per disattivarlo';
+    return true;
+  }
   // modalità attuale dell'allarme letta da "Aggiorna dashboard": away / night / home / off
   function alarmMode() {
     const raw = values['allarme'];
@@ -922,6 +1012,10 @@ Luce | lampadina | interruttore`;
     b.append(ic, tx);
     if (it.code) { const l = el('span', 'lock'); l.innerHTML = svg('lucchetto'); b.appendChild(l); }
     b.addEventListener('click', () => {
+      if (secMode === 'away' || secMode === 'night') {
+        const op = openSensors();
+        if (op.length) return askArm(it, b, op);
+      }
       if (!it.code) return run(it, b);
       if (!pin && !faceId) return toast('Imposta prima un codice o il Face ID in ⚙︎');
       askPin(`Codice per “${it.name}”`, () => run(it, b));
@@ -932,6 +1026,8 @@ Luce | lampadina | interruttore`;
   // ================= Comandi rapidi =================
   const baseUrl = () => location.origin + location.pathname;
   function run(it, btn) {
+    const am = /allarme fuori casa/i.test(it.shortcut) ? 'Fuori casa' : /allarme notte/i.test(it.shortcut) ? 'Notte' : /cormorano disabilitato/i.test(it.shortcut) ? 'Disattivato' : null;
+    if (am) { values['allarme'] = am; store.set('casa.values', values); store.set('casa.armedAt', Date.now()); }
     if (it.toggle) { states[it.shortcut] = !states[it.shortcut]; store.set('casa.states.v2', states); }
     if (btn) btn.classList.add('flash');
     const name = encodeURIComponent(it.shortcut);
@@ -1021,7 +1117,7 @@ Luce | lampadina | interruttore`;
     openPinPad(title);
     if (faceId && faceSupported()) $('pinSub').textContent = pin ? 'Inserisci il codice oppure usa il Face ID' : 'Tocca “Usa Face ID”';
   }
-  function closePin() { $('pinBg').classList.remove('open'); pinCb = null; entry = ''; }
+  function closePin() { $('pinBg').classList.remove('open', 'alarm'); pinCb = null; entry = ''; }
   // l'impronta del codice viene calcolata mentre digiti: al tocco su ✓ il confronto è immediato
   // (se il comando parte subito dentro il tocco, Safari non chiede "Aprire in Comandi?")
   let entryHash = null, entryHashFor = null;
@@ -1147,6 +1243,42 @@ Luce | lampadina | interruttore`;
   // ================= Orologio e meteo =================
   const fmtTime = new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-digit' });
   const fmtDate = new Intl.DateTimeFormat('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
+  // Aggiornamento a distanza: mentre è sullo screensaver, ogni 30 minuti guarda se su GitHub c'è una versione nuova
+  async function checkUpdate() {
+    if (BUILD === 'dev' || !/^https?:$/.test(location.protocol)) return;
+    try {
+      const t = await (await fetch(baseUrl() + '?check=' + Date.now(), { cache: 'no-store' })).text();
+      const m = t.match(/const BUILD = '([^']+)'/);
+      if (m && m[1] !== BUILD) location.replace(baseUrl());
+    } catch {}
+  }
+  // Senza internet: il service worker tiene una copia della pagina, così dopo un comando non resta la pagina di errore
+  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+  // Avviso istantaneo dall'hub di casa: un'automazione dell'app Casa (portoncino aperto / allarme scattato)
+  // pubblica un messaggio su ntfy.sh e la dashboard, in ascolto, mostra subito la richiesta di disattivazione.
+  const NTFY_TOPIC = 'casa-f6e7cb4f62c7d16be10e';
+  function listenHub() {
+    if (!('EventSource' in window) || !/^https?:$/.test(location.protocol)) return;
+    const es = new EventSource(`https://ntfy.sh/${NTFY_TOPIC}/sse`);
+    es.onmessage = e => {
+      let msg = '';
+      try { const d = JSON.parse(e.data); if (d.event !== 'message') return; msg = String(d.message || '').toLowerCase(); } catch { return; }
+      // stato di porte e finestre mandato dall'hub ("Finestra Cucina=aperta"): aggiorna solo quei sensori
+      if (msg.includes('=')) {
+        const sens = parse(config).flatMap(p => p.groups.flatMap(g => g.items)).filter(i => i.sensor && ['porta', 'finestra'].includes(i.icon));
+        let n = 0;
+        msg.split(/[\n;]+/).forEach(part => {
+          const m = part.match(/^\s*(.+?)\s*=\s*(.+?)\s*$/); if (!m) return;
+          sens.filter(i => i.shortcut.toLowerCase() === m[1] || i.name.toLowerCase() === m[1]).forEach(i => { values[i.shortcut.toLowerCase()] = m[2]; n++; });
+        });
+        if (n) { store.set('casa.values', values); render(); drawOpenings(); }
+        return;
+      }
+      // solo portoncino aperto con allarme "fuori casa" (il controllo lo fa l'automazione di Casa, che conosce lo stato vero)
+      if (/fuori/.test(msg)) { values['allarme'] = 'Fuori casa'; store.set('casa.values', values); promptDisarm('Allarme inserito', 'hub' + Date.now()); }
+    };
+  }
+  listenHub();
   function tick() {
     const now = new Date();
     $('clock').textContent = $('dclock').textContent = fmtTime.format(now);
@@ -1154,6 +1286,8 @@ Luce | lampadina | interruttore`;
     $('dtime').textContent = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     if ($('dim').classList.contains('active')) {
       drawCalendar(now);
+      $('dim').classList.toggle('night', now.getHours() >= 23 || now.getHours() < 7);
+      if (Date.now() - lastUpdateCheck > 30 * 60000) { lastUpdateCheck = Date.now(); checkUpdate(); }
       // protezione OLED: sposto di poco tutto lo screensaver ogni minuto, così nessun pixel resta sempre acceso
       const m = now.getHours() * 60 + now.getMinutes(), dx = Math.round(Math.sin(m * 0.7) * 8), dy = Math.round(Math.cos(m * 1.3) * 6);
       document.querySelector('.sb').style.transform = `translate(${dx}px, ${dy}px)`;
@@ -1186,8 +1320,20 @@ Luce | lampadina | interruttore`;
     if (!$('calwd')) return;
     $('calwd').textContent = new Intl.DateTimeFormat('it-IT', { weekday: 'long' }).format(now);
     $('calnum').textContent = now.getDate();
-    $('calmonth').textContent = new Intl.DateTimeFormat('it-IT', { month: 'long' }).format(now);
-    $('calyear').textContent = now.getFullYear();
+    $('calmon').textContent = new Intl.DateTimeFormat('it-IT', { month: 'short' }).format(now).replace('.', '').toUpperCase();
+    drawOpenings();
+  }
+  // widget dello screensaver: porte e finestre aperte secondo l'ultimo aggiornamento
+  function drawOpenings() {
+    const box = $('sbopen'); if (!box) return;
+    const all = parse(config).flatMap(p => p.groups.flatMap(g => g.items)).filter(i => i.sensor && ['finestra', 'porta'].includes(i.icon));
+    const known = all.some(i => values[i.shortcut.toLowerCase()] != null && values[i.shortcut.toLowerCase()] !== '');
+    const op = openSensors(), age = Math.round((Date.now() - store.get('casa.lastRefresh', 0)) / 60000);
+    const when = age < 1 ? 'aggiornato ora' : age < 600 ? `aggiornato ${age} min fa` : '';
+    box.classList.toggle('alert', op.length > 0);
+    box.innerHTML = `<div class="optitle">${svg(op.length ? op[0].icon : 'finestra')}<span>Porte e finestre</span></div>`;
+    box.append(el('div', 'opval', !known ? 'Da aggiornare' : op.length ? `${op.length} apert${op.length > 1 ? 'e' : 'a'}` : 'Tutto chiuso'));
+    box.append(el('div', 'opsub', op.length ? op.map(i => i.name).join(', ') : when));
   }
 
   const WMO = { 0: 'Sereno', 1: 'Poco nuvoloso', 2: 'Parz. nuvoloso', 3: 'Coperto', 45: 'Nebbia', 48: 'Nebbia',
@@ -1209,6 +1355,13 @@ Luce | lampadina | interruttore`;
       if (d.daily) $('wxhl').textContent = `Max ${Math.round(d.daily.temperature_2m_max[0])}°  Min ${Math.round(d.daily.temperature_2m_min[0])}°`;
       const kind = wxKind(code, night);
 
+      if (d.hourly) {
+        const now0 = new Date(); now0.setMinutes(0, 0, 0);
+        let i0 = d.hourly.time.findIndex(x => new Date(x) >= now0); if (i0 < 0) i0 = 0;
+        const was = rainSoon;
+        rainSoon = d.hourly.weather_code.slice(i0, i0 + 3).some(c => (c >= 51 && c <= 67) || (c >= 80 && c <= 82) || c >= 95);
+        if (was !== rainSoon) render();
+      }
       const hrs = $('wxhours'); hrs.textContent = '';
       if (d.hourly) {
         const nowH = new Date(); nowH.setMinutes(0, 0, 0);
@@ -1248,14 +1401,16 @@ Luce | lampadina | interruttore`;
     document.body.style.background = on ? '#000' : '';
   };
   let lastUse = Date.now();
-  function resetIdle() { clearTimeout(idleTimer); if (!$('dim').classList.contains('active')) lastUse = Date.now(); if (opts.autoDim) idleTimer = setTimeout(() => setDim(true), 15000); }
-  // Primo tocco sullo screensaver: se il pannello non si usa da 10 minuti (o gli stati sono vecchi di 10 minuti) aggiorna tutto,
+  function resetIdle() { clearTimeout(idleTimer); if (!$('dim').classList.contains('active')) lastUse = Date.now(); if (opts.autoDim) idleTimer = setTimeout(() => { if ($('pinBg').classList.contains('open') || $('askBg').classList.contains('open')) return resetIdle(); setDim(true); }, 15000); }
+  // Primo tocco sullo screensaver: se il pannello non si usa da un'ora (o gli stati sono vecchi di un'ora) aggiorna tutto,
   // altrimenti torna solo a tutto schermo. Le due cose non si fanno insieme (Comandi e tutto schermo si disturbano).
-  const REFRESH_AFTER = 10 * 60000;
+  const REFRESH_AFTER = 60 * 60000; // un'ora
   $('dim').addEventListener('click', e => {
     e.stopPropagation();
     const idle = Date.now() - lastUse, stale = Date.now() - store.get('casa.lastRefresh', 0);
     setDim(false); resetIdle(); lastUse = Date.now();
+    // allarme "fuori casa": chi tocca il pannello sta entrando, chiedo subito codice o Face ID
+    if (alarmMode() === 'away' && promptDisarm('Allarme inserito', 'tap' + Date.now())) return;
     if (idle >= REFRESH_AFTER || stale >= REFRESH_AFTER) refreshNow();
     else goFullscreen();
   });
