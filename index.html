@@ -546,7 +546,7 @@ Luce | lampadina | interruttore`;
   const $ = id => document.getElementById(id);
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 
-  const BUILD = '4ec4db8837'; // cambia a ogni versione pubblicata: serve al pannello per accorgersi degli aggiornamenti
+  const BUILD = '5878226513'; // cambia a ogni versione pubblicata: serve al pannello per accorgersi degli aggiornamenti
   let hubDownAt = 0, rainSoon = false, alarmShownFor = null, askCb = null, lastUpdateCheck = Date.now(), wxData = null, airData = null;
   let config = store.get('casa.config.v2', DEFAULT_CONFIG);
   if (store.get('casa.edited', false) !== true) config = DEFAULT_CONFIG;
@@ -1470,7 +1470,7 @@ Luce | lampadina | interruttore`;
     document.body.style.background = on ? '#000' : '';
   };
   let lastUse = Date.now();
-  function resetIdle() { clearTimeout(idleTimer); if (!$('dim').classList.contains('active')) lastUse = Date.now(); if (opts.autoDim) idleTimer = setTimeout(() => { if ($('pinBg').classList.contains('open') || $('askBg').classList.contains('open') || $('sumBg').classList.contains('open')) return resetIdle(); setDim(true); }, 15000); }
+  function resetIdle() { clearTimeout(idleTimer); if (!$('dim').classList.contains('active')) lastUse = Date.now(); if (opts.autoDim) idleTimer = setTimeout(() => { if ($('pinBg').classList.contains('open') || $('askBg').classList.contains('open')) return resetIdle(); $('sumBg').classList.remove('open'); /* il riepilogo non visto ricompare al tocco */ setDim(true); }, 15000); }
   // Riepilogo della giornata: al primo tocco dopo le 6, dopo le 13 e dopo le 21 (una volta per fascia)
   function summarySlot(d = new Date()) {
     const h = d.getHours(), day = d.toDateString(), at = (dd, hh) => { const x = new Date(dd); x.setHours(hh, 0, 0, 0); return x.getTime(); };
@@ -1487,7 +1487,7 @@ Luce | lampadina | interruttore`;
   }
   function showSummary() {
     const sl = summarySlot(); if (!sl) return;
-    store.set('casa.summaryDone', sl.key); store.set('casa.summaryPending', null);
+    store.set('casa.summaryPending', sl.key); // diventa "visto" solo quando lo tocchi
     const rows = [], row = (icon, html, warn) => rows.push(`<div class="sumrow${warn ? ' warn' : ''}">${icon.startsWith('<') ? icon : svg(icon)}<span>${html}</span></div>`);
     const esc = t => String(t).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
     if (wxData && wxData.current) {
@@ -1506,9 +1506,8 @@ Luce | lampadina | interruttore`;
     $('sumTitle').textContent = sl.title;
     $('sumBody').innerHTML = rows.join('');
     $('sumBg').classList.add('open');
-    clearTimeout(showSummary.t); showSummary.t = setTimeout(closeSummary, 25000);
   }
-  const closeSummary = () => $('sumBg').classList.remove('open');
+  const closeSummary = () => { $('sumBg').classList.remove('open'); const k = store.get('casa.summaryPending', null); if (k) store.set('casa.summaryDone', k); store.set('casa.summaryPending', null); };
   $('sumBg').addEventListener('click', closeSummary); // basta un tocco, anche sulla scheda
   // dopo un aggiornamento (la pagina si ricarica) mostro il riepilogo in attesa, con i dati freschi
   setTimeout(() => { const sl = summarySlot(); if (sl && store.get('casa.summaryPending', null) === sl.key && !$('pinBg').classList.contains('open')) showSummary(); }, 1500);
