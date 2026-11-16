@@ -256,12 +256,16 @@
   .wxsun { font-size: clamp(11px, 3.2vh, 15px); color: rgba(255,255,255,.5); margin-top: 2px; }
   /* Riepilogo della giornata (mattina, pomeriggio, sera) */
   .sum { background: rgba(40,40,44,.94); border-radius: 26px; padding: 22px 26px 18px; width: min(560px, 90vw); }
-  .sum .pt { font-size: 22px; font-weight: 700; margin-bottom: 12px; }
-  .sumrow { display: flex; align-items: center; gap: 12px; padding: 7px 0; font-size: 16px; line-height: 1.3; border-top: 1px solid rgba(255,255,255,.08); }
-  .sumrow:first-of-type { border-top: 0; }
+  .sum { text-align: center; }
+  .sum .pt { font-size: 24px; font-weight: 700; margin-bottom: 10px; }
+  .sumrow { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 6px 0; font-size: 17px; line-height: 1.3; }
   .sumrow svg { font-size: 20px; flex: none; color: var(--accent); }
   .sumrow.warn svg, .sumrow.warn b { color: #ff9f0a; }
-  .sum .row { display: flex; justify-content: flex-end; margin-top: 12px; }
+  .sum { touch-action: none; transition: transform .25s ease, opacity .25s ease; }
+  .sum.dragging { transition: none; }
+  .swipehint { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 14px; font-size: 13px; color: rgba(255,255,255,.45); }
+  .swipehint svg { font-size: 22px; animation: nudge 1.6s ease-in-out infinite; }
+  @keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
   .wxhours { flex: none; display: flex; justify-content: space-between; gap: 6px; border-top: 1px solid rgba(255,255,255,.15); padding-top: 12px; }
   .wxh { text-align: center; font-size: 13px; color: rgba(255,255,255,.7); flex: 1; }
   .wxh svg { width: 24px; height: 24px; display: block; margin: clamp(2px, 1.2vh, 6px) auto; }
@@ -279,6 +283,12 @@
   .ask .row { display: flex; gap: 12px; justify-content: center; }
   .ask .btn.warn { background: #ff3b30; color: #fff; }
   /* Screensaver notturno: tutto rosso scuro e tenue (come StandBy di notte) */
+  /* icone sopra l'ora: lucchetto se l'allarme è inserito, Wi-Fi con ! se manca la rete */
+  .sblock { position: absolute; top: 18%; left: 0; right: 0; display: flex; justify-content: center; gap: 16px; pointer-events: none; }
+  .sblock svg { width: 34px; height: 34px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .sblock .lk { color: #f2f2f7; }
+  .sblock .nw { color: #ff9f0a; }
+  .sbmode { position: absolute; bottom: 19%; left: 0; right: 0; text-align: center; color: rgba(242,242,247,.85); font-size: 17px; font-weight: 600; pointer-events: none; }
   .dim.night .sb { filter: brightness(.55) sepia(1) saturate(12) hue-rotate(-38deg) brightness(.5); }
   /* Tastierino codice */
   .tile .lock { position: absolute; top: 9px; right: 11px; font-size: 14px; opacity: .55; }
@@ -366,7 +376,7 @@
 
 <div class="dim" id="dim">
   <div class="sb">
-    <div class="sbw sbclock"><svg class="ring" viewBox="0 0 200 200" aria-hidden="true"><line x1="100.0" y1="17.0" x2="100.0" y2="8.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="109.1" y1="13.0" x2="109.7" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="118.5" y1="12.9" x2="119.6" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="128.3" y1="12.8" x2="129.9" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="138.9" y1="12.6" x2="141.0" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="148.6" y1="15.8" x2="153.1" y2="8.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="163.9" y1="12.0" x2="166.8" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="179.5" y1="11.7" x2="182.8" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="188.3" y1="20.5" x2="192.0" y2="17.2" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="188.0" y1="36.1" x2="192.0" y2="33.2" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="184.2" y1="51.4" x2="192.0" y2="46.9" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="187.4" y1="61.1" x2="192.0" y2="59.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.2" y1="71.7" x2="192.0" y2="70.1" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.1" y1="81.5" x2="192.0" y2="80.4" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.0" y1="90.9" x2="192.0" y2="90.3" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="183.0" y1="100.0" x2="192.0" y2="100.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="187.0" y1="109.1" x2="192.0" y2="109.7" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.1" y1="118.5" x2="192.0" y2="119.6" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.2" y1="128.3" x2="192.0" y2="129.9" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.4" y1="138.9" x2="192.0" y2="141.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="184.2" y1="148.6" x2="192.0" y2="153.1" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="188.0" y1="163.9" x2="192.0" y2="166.8" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="188.3" y1="179.5" x2="192.0" y2="182.8" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="179.5" y1="188.3" x2="182.8" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="163.9" y1="188.0" x2="166.8" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="148.6" y1="184.2" x2="153.1" y2="192.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="138.9" y1="187.4" x2="141.0" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="128.3" y1="187.2" x2="129.9" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="118.5" y1="187.1" x2="119.6" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="109.1" y1="187.0" x2="109.7" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="100.0" y1="183.0" x2="100.0" y2="192.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="90.9" y1="187.0" x2="90.3" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="81.5" y1="187.1" x2="80.4" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="71.7" y1="187.2" x2="70.1" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="61.1" y1="187.4" x2="59.0" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="51.4" y1="184.2" x2="46.9" y2="192.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="36.1" y1="188.0" x2="33.2" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="20.5" y1="188.3" x2="17.2" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="11.7" y1="179.5" x2="8.0" y2="182.8" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.0" y1="163.9" x2="8.0" y2="166.8" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="15.8" y1="148.6" x2="8.0" y2="153.1" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="12.6" y1="138.9" x2="8.0" y2="141.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.8" y1="128.3" x2="8.0" y2="129.9" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.9" y1="118.5" x2="8.0" y2="119.6" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="13.0" y1="109.1" x2="8.0" y2="109.7" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="17.0" y1="100.0" x2="8.0" y2="100.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="13.0" y1="90.9" x2="8.0" y2="90.3" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.9" y1="81.5" x2="8.0" y2="80.4" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.8" y1="71.7" x2="8.0" y2="70.1" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.6" y1="61.1" x2="8.0" y2="59.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="15.8" y1="51.4" x2="8.0" y2="46.9" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="12.0" y1="36.1" x2="8.0" y2="33.2" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="11.7" y1="20.5" x2="8.0" y2="17.2" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="20.5" y1="11.7" x2="17.2" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="36.1" y1="12.0" x2="33.2" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="51.4" y1="15.8" x2="46.9" y2="8.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="61.1" y1="12.6" x2="59.0" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="71.7" y1="12.8" x2="70.1" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="81.5" y1="12.9" x2="80.4" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="90.9" y1="13.0" x2="90.3" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/></svg><div class="dclock" id="dclock"></div><div class="dtime" id="dtime"></div></div>
+    <div class="sbw sbclock"><svg class="ring" viewBox="0 0 200 200" aria-hidden="true"><line x1="100.0" y1="17.0" x2="100.0" y2="8.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="109.1" y1="13.0" x2="109.7" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="118.5" y1="12.9" x2="119.6" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="128.3" y1="12.8" x2="129.9" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="138.9" y1="12.6" x2="141.0" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="148.6" y1="15.8" x2="153.1" y2="8.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="163.9" y1="12.0" x2="166.8" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="179.5" y1="11.7" x2="182.8" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="188.3" y1="20.5" x2="192.0" y2="17.2" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="188.0" y1="36.1" x2="192.0" y2="33.2" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="184.2" y1="51.4" x2="192.0" y2="46.9" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="187.4" y1="61.1" x2="192.0" y2="59.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.2" y1="71.7" x2="192.0" y2="70.1" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.1" y1="81.5" x2="192.0" y2="80.4" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.0" y1="90.9" x2="192.0" y2="90.3" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="183.0" y1="100.0" x2="192.0" y2="100.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="187.0" y1="109.1" x2="192.0" y2="109.7" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.1" y1="118.5" x2="192.0" y2="119.6" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.2" y1="128.3" x2="192.0" y2="129.9" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="187.4" y1="138.9" x2="192.0" y2="141.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="184.2" y1="148.6" x2="192.0" y2="153.1" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="188.0" y1="163.9" x2="192.0" y2="166.8" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="188.3" y1="179.5" x2="192.0" y2="182.8" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="179.5" y1="188.3" x2="182.8" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="163.9" y1="188.0" x2="166.8" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="148.6" y1="184.2" x2="153.1" y2="192.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="138.9" y1="187.4" x2="141.0" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="128.3" y1="187.2" x2="129.9" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="118.5" y1="187.1" x2="119.6" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="109.1" y1="187.0" x2="109.7" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="100.0" y1="183.0" x2="100.0" y2="192.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="90.9" y1="187.0" x2="90.3" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="81.5" y1="187.1" x2="80.4" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="71.7" y1="187.2" x2="70.1" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="61.1" y1="187.4" x2="59.0" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="51.4" y1="184.2" x2="46.9" y2="192.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="36.1" y1="188.0" x2="33.2" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="20.5" y1="188.3" x2="17.2" y2="192.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="11.7" y1="179.5" x2="8.0" y2="182.8" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.0" y1="163.9" x2="8.0" y2="166.8" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="15.8" y1="148.6" x2="8.0" y2="153.1" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="12.6" y1="138.9" x2="8.0" y2="141.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.8" y1="128.3" x2="8.0" y2="129.9" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.9" y1="118.5" x2="8.0" y2="119.6" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="13.0" y1="109.1" x2="8.0" y2="109.7" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="17.0" y1="100.0" x2="8.0" y2="100.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="13.0" y1="90.9" x2="8.0" y2="90.3" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.9" y1="81.5" x2="8.0" y2="80.4" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.8" y1="71.7" x2="8.0" y2="70.1" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="12.6" y1="61.1" x2="8.0" y2="59.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="15.8" y1="51.4" x2="8.0" y2="46.9" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="12.0" y1="36.1" x2="8.0" y2="33.2" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="11.7" y1="20.5" x2="8.0" y2="17.2" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="20.5" y1="11.7" x2="17.2" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="36.1" y1="12.0" x2="33.2" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="51.4" y1="15.8" x2="46.9" y2="8.0" stroke="#d1d1d6" stroke-width="2.2" stroke-linecap="round"/><line x1="61.1" y1="12.6" x2="59.0" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="71.7" y1="12.8" x2="70.1" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="81.5" y1="12.9" x2="80.4" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/><line x1="90.9" y1="13.0" x2="90.3" y2="8.0" stroke="#636366" stroke-width="1.2" stroke-linecap="round"/></svg><div class="dclock" id="dclock"></div><div class="sblock" id="sblock"></div><div class="dtime" id="dtime"></div><div class="sbmode" id="sbmode"></div></div>
     <div class="sbcol">
       <div class="sbtop">
         <div class="sbw sbcal"><div class="calday"><div class="calwd" id="calwd"></div><div class="calnum" id="calnum"></div><div class="calmon" id="calmon"></div></div></div>
@@ -385,7 +395,7 @@
 <div class="toast" id="toast"></div>
 
 <div class="pin-bg" id="sumBg">
-  <div class="sum"><div class="pt" id="sumTitle"></div><div id="sumBody"></div><div class="row"><button class="btn" id="sumClose">Chiudi</button></div></div>
+  <div class="sum"><div class="pt" id="sumTitle"></div><div id="sumBody"></div><div class="swipehint"><svg viewBox="0 0 24 24" class="i"><path d="M6 14l6-6 6 6"/></svg>Scorri verso l’alto per chiudere</div></div>
 </div>
 <div class="pin-bg" id="askBg">
   <div class="ask">
@@ -539,8 +549,8 @@ Luce | lampadina | interruttore`;
   const $ = id => document.getElementById(id);
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 
-  const BUILD = 'e1691b88a1'; // cambia a ogni versione pubblicata: serve al pannello per accorgersi degli aggiornamenti
-  let rainSoon = false, alarmShownFor = null, askCb = null, lastUpdateCheck = Date.now(), wxData = null, airData = null;
+  const BUILD = '92f554315a'; // cambia a ogni versione pubblicata: serve al pannello per accorgersi degli aggiornamenti
+  let hubDownAt = 0, rainSoon = false, alarmShownFor = null, askCb = null, lastUpdateCheck = Date.now(), wxData = null, airData = null;
   let config = store.get('casa.config.v2', DEFAULT_CONFIG);
   if (store.get('casa.edited', false) !== true) config = DEFAULT_CONFIG;
   // aggiornamento a distanza: il gruppo dei pulsanti allarme in Casa si chiama "Allarme"
@@ -1312,6 +1322,8 @@ Luce | lampadina | interruttore`;
   function listenHub() {
     if (!('EventSource' in window) || !/^https?:$/.test(location.protocol)) return;
     const es = new EventSource(`https://ntfy.sh/${NTFY_TOPIC}/sse`);
+    es.onopen = () => { hubDownAt = 0; };
+    es.onerror = () => { if (!hubDownAt) hubDownAt = Date.now(); };
     es.onmessage = e => {
       let msg = '';
       try { const d = JSON.parse(e.data); if (d.event !== 'message') return; msg = String(d.message || '').toLowerCase(); } catch { return; }
@@ -1329,13 +1341,6 @@ Luce | lampadina | interruttore`;
           if (alarmMode() === 'off' && $('pinBg').classList.contains('alarm')) closePin(); // disattivato altrove: tolgo la richiesta del codice
           if (alarmMode() === 'off' && !$('pinBg').classList.contains('open') && queueSummary()) showSummary();
         });
-        const t = thermoItem();
-        msg.split(/[\n;]+/).forEach(part => {
-          const m = part.match(/^\s*(.+?)\s*=\s*(.+?)\s*$/); if (!m || !t) return;
-          if (m[1] !== t.name.toLowerCase() && m[1] !== t.shortcut.toLowerCase()) return;
-          const v = readBool(m[2]); if (v === null) return;
-          states[t.shortcut] = v; store.set('casa.states.v2', states); n++;
-        });
         if (n) { store.set('casa.values', values); render(); drawOpenings(); }
         return;
       }
@@ -1352,6 +1357,11 @@ Luce | lampadina | interruttore`;
     if ($('dim').classList.contains('active')) {
       drawCalendar(now);
       $('dim').classList.toggle('night', now.getHours() >= 23 || now.getHours() < 7);
+      const armed = ['away', 'night', 'home'].includes(alarmMode()), netBad = !navigator.onLine || (hubDownAt && Date.now() - hubDownAt > 20000);
+      const icons = (armed ? '<svg class="lk" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>' : '')
+        + (netBad ? '<svg class="nw" viewBox="0 0 24 24"><path d="M2 9.5a14.5 14.5 0 0 1 14.5-3.6M5 13a9.5 9.5 0 0 1 9-2.6M8.2 16.4a4.6 4.6 0 0 1 4.3-1.2"/><circle cx="11.5" cy="19.5" r="1" fill="currentColor" stroke="none"/><path d="M20 9v6.5"/><circle cx="20" cy="19.2" r="1" fill="currentColor" stroke="none"/></svg>' : '');
+      if ($('sblock').innerHTML !== icons) $('sblock').innerHTML = icons;
+      $('sbmode').textContent = armed ? 'Allarme ' + { away: 'fuori casa', night: 'notte', home: 'casa' }[alarmMode()] : '';
       if (Date.now() - lastUpdateCheck > 30 * 60000) { lastUpdateCheck = Date.now(); checkUpdate(); }
       // protezione OLED: sposto di poco tutto lo screensaver ogni minuto, così nessun pixel resta sempre acceso
       const m = now.getHours() * 60 + now.getMinutes(), dx = Math.round(Math.sin(m * 0.7) * 8), dy = Math.round(Math.cos(m * 1.3) * 6);
@@ -1521,8 +1531,24 @@ Luce | lampadina | interruttore`;
     $('sumBg').classList.add('open');
     clearTimeout(showSummary.t); showSummary.t = setTimeout(closeSummary, 25000);
   }
-  const closeSummary = () => $('sumBg').classList.remove('open');
-  $('sumClose').addEventListener('click', closeSummary);
+  const closeSummary = () => { $('sumBg').classList.remove('open'); const c = document.querySelector('.sum'); c.style.transform = ''; c.style.opacity = ''; };
+  // trascina verso l'alto per chiudere
+  (() => {
+    const card = document.querySelector('.sum'); let y0 = null, dy = 0;
+    const start = y => { y0 = y; dy = 0; card.classList.add('dragging'); };
+    const move = y => { if (y0 == null) return; dy = Math.min(0, y - y0); card.style.transform = `translateY(${dy}px)`; card.style.opacity = String(1 + dy / 300); };
+    const end = () => {
+      if (y0 == null) return; y0 = null; card.classList.remove('dragging');
+      if (dy < -60) { card.style.transform = 'translateY(-120%)'; card.style.opacity = '0'; setTimeout(closeSummary, 250); }
+      else { card.style.transform = ''; card.style.opacity = ''; }
+    };
+    card.addEventListener('touchstart', e => start(e.touches[0].clientY), { passive: true });
+    card.addEventListener('touchmove', e => { e.preventDefault(); move(e.touches[0].clientY); }, { passive: false });
+    card.addEventListener('touchend', end);
+    card.addEventListener('mousedown', e => start(e.clientY));
+    window.addEventListener('mousemove', e => move(e.clientY));
+    window.addEventListener('mouseup', end);
+  })();
   $('sumBg').addEventListener('click', e => { if (e.target === $('sumBg')) closeSummary(); });
   // dopo un aggiornamento (la pagina si ricarica) mostro il riepilogo in attesa, con i dati freschi
   setTimeout(() => { const sl = summarySlot(); if (sl && store.get('casa.summaryPending', null) === sl.key && !$('pinBg').classList.contains('open')) showSummary(); }, 1500);
