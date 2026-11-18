@@ -550,7 +550,7 @@ Luce | lampadina | interruttore`;
   const $ = id => document.getElementById(id);
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 
-  const BUILD = 'ae0ffe5712'; // cambia a ogni versione pubblicata: serve al pannello per accorgersi degli aggiornamenti
+  const BUILD = '742c32cd15'; // cambia a ogni versione pubblicata: serve al pannello per accorgersi degli aggiornamenti
   let hubDownAt = 0, rainSoon = false, alarmShownFor = null, askCb = null, lastUpdateCheck = Date.now(), wxData = null, airData = null;
   let config = store.get('casa.config.v2', DEFAULT_CONFIG);
   if (store.get('casa.edited', false) !== true) config = DEFAULT_CONFIG;
@@ -679,7 +679,7 @@ Luce | lampadina | interruttore`;
         if (g.name) head.appendChild(el('h3', null, g.name));
         // promemoria "aggiorna" solo per temperatura e umidità (porte e finestre arrivano in tempo reale da ntfy)
         if (g.items.some(i => ['termometro', 'goccia'].includes(i.icon))) {
-          const hint = el('button', 'refreshhint'); hint.dataset.stale = 60;
+          const hint = el('button', 'refreshhint'); hint.dataset.stale = 10;
           hint.addEventListener('click', refreshNow);
           head.appendChild(hint);
         }
@@ -739,7 +739,7 @@ Luce | lampadina | interruttore`;
       if (!its.length) { box.hidden = true; return; }
       const clima = its.filter(i => ['termometro', 'goccia'].includes(i.icon));
       const aperture = its.filter(i => !['termometro', 'goccia'].includes(i.icon));
-      const sets = [[clima, 60], [aperture, 0]].filter(([a]) => a.length);
+      const sets = [[clima, 10], [aperture, 0]].filter(([a]) => a.length);
       sets.forEach(([set, mins], k) => {
         if (k) box.appendChild(el('span', 'chipsep'));
         if (mins) { const h = el('button', 'refreshhint'); h.dataset.stale = mins; h.addEventListener('click', refreshNow); box.appendChild(h); }
@@ -783,7 +783,7 @@ Luce | lampadina | interruttore`;
         box.prepend(c); n++;
       }
       if (n) {
-        const h = el('button', 'refreshhint'); h.dataset.stale = 60; h.addEventListener('click', refreshNow);
+        const h = el('button', 'refreshhint'); h.dataset.stale = 10; h.addEventListener('click', refreshNow);
         box.prepend(h); // il promemoria per primo, sempre visibile
       }
       box.hidden = !n;
@@ -1585,7 +1585,7 @@ Luce | lampadina | interruttore`;
     const sl = summarySlot(), due = sl && store.get('casa.summaryDone', null) !== sl.key;
     if (due) store.set('casa.summaryPending', sl.key);
     if (alarmMode() === 'away' && promptDisarm('Allarme inserito', 'tap' + Date.now())) return;
-    goFullscreen(); if (due) showSummary(); // niente aggiornamento automatico: quasi tutto arriva in tempo reale da ntfy
+    goFullscreen(); if (due) showSummary(); // niente aggiornamento automatico: per le temperature c'è il promemoria "aggiorna" dopo 10 minuti
   });
   ['pointerdown', 'touchstart'].forEach(ev => document.addEventListener(ev, resetIdle, { passive: true }));
 
