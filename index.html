@@ -159,6 +159,7 @@
   .tile.on { background: var(--on-bg); color: var(--on-text); }
   .tile.on .ic { background: var(--yellow); color: #fff; }
   .tile.on .st { color: var(--on-muted); }
+  .tile.scene.on .ic { color: #ff9f0a; }
   .tile.offline { opacity: .55; }
   .tile.offline .st { color: #ff9f0a !important; font-weight: 600; }
   .tile.offline .ic { background: rgba(255,255,255,.12) !important; color: var(--muted) !important; }
@@ -549,7 +550,7 @@ Luce | lampadina | interruttore`;
   const $ = id => document.getElementById(id);
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 
-  const BUILD = 'd0f3587493'; // cambia a ogni versione pubblicata: serve al pannello per accorgersi degli aggiornamenti
+  const BUILD = 'ae0ffe5712'; // cambia a ogni versione pubblicata: serve al pannello per accorgersi degli aggiornamenti
   let hubDownAt = 0, rainSoon = false, alarmShownFor = null, askCb = null, lastUpdateCheck = Date.now(), wxData = null, airData = null;
   let config = store.get('casa.config.v2', DEFAULT_CONFIG);
   if (store.get('casa.edited', false) !== true) config = DEFAULT_CONFIG;
@@ -580,7 +581,7 @@ Luce | lampadina | interruttore`;
         name: p[0], icon: (p[1] || 'presa').toLowerCase(),
         toggle: flags.includes('interr'), big: flags.includes('grande'), code: flags.includes('codice'), input: /\binput\b/.test(flags),
         sensor: flags.includes('sensore'), hidden: flags.includes('nascosto'),
-        shortcut: p[3] || p[0], emoji: p[4] || '',
+        shortcut: p[3] || p[0], emoji: p[4] || '', group: group.name, page: page.name,
         scene: !flags.includes('sensore') && (/scen/i.test(group.name) || !flags.includes('interr') && !['robot', 'base'].includes((p[1] || '').toLowerCase()) && !flags.includes('azione'))
       });
     }
@@ -775,6 +776,12 @@ Luce | lampadina | interruttore`;
         c.addEventListener('click', refreshNow);
         box.appendChild(c); n++;
       }
+      const cm = climaMode();
+      if (cm) {
+        const c = el('button', 'chip ' + (cm === 'off' ? 'grey' : 'yellow')); c.innerHTML = svg({ pompa: 'fiamma', condiz: 'fiocco', deumid: 'goccia', off: 'spento' }[cm]);
+        c.appendChild(el('span', null, 'Soggiorno · ' + { pompa: 'pompa di calore', condiz: 'aria condizionata', deumid: 'deumidificatore', off: 'spento' }[cm]));
+        box.prepend(c); n++;
+      }
       if (n) {
         const h = el('button', 'refreshhint'); h.dataset.stale = 60; h.addEventListener('click', refreshNow);
         box.prepend(h); // il promemoria per primo, sempre visibile
@@ -922,6 +929,10 @@ Luce | lampadina | interruttore`;
     }
     return out;
   }
+  // modalità del climatizzatore del soggiorno (comandato a infrarossi): 'pompa' | 'condiz' | 'deumid' | 'off'
+  const climaKindOf = t => /pompa|calore|caldo|heat/i.test(t) ? 'pompa' : /condiz|fredd|cool/i.test(t) ? 'condiz' : /deumid|dry/i.test(t) ? 'deumid' : /spent|off|spegn/i.test(t) ? 'off' : null;
+  function climaMode() { const v = values['clima soggiorno']; return v ? climaKindOf(v) : null; }
+  function climaKind(it) { if (it.toggle || it.sensor || !/clima/i.test(it.group || '') || !/soggiorno/i.test(it.page || '')) return null; return climaKindOf(it.name); } // con "spento" si illumina Spegni Monsone
   // porte e finestre aperte secondo l'ultimo aggiornamento (senza doppioni)
   function openSensors() {
     const seen = new Map();
@@ -1043,6 +1054,9 @@ Luce | lampadina | interruttore`;
       return b;
     }
     let on = it.toggle && states[it.shortcut];
+    // tasti del clima del soggiorno: si illumina la modalità attiva
+    const cm = climaMode(), ck = climaKind(it);
+    if (cm && ck && cm === ck) on = true;
     // tasti dell'allarme: si illumina quello della modalità attiva
     const mode = alarmMode(), sc = (it.shortcut || '').toLowerCase();
     const secMode = /allarme fuori casa/.test(sc) ? 'away' : /allarme notte/.test(sc) ? 'night' : /cormorano disabilitato/.test(sc) ? 'off' : null;
@@ -1341,6 +1355,12 @@ Luce | lampadina | interruttore`;
       seen.add(d.id); store.set('casa.ntfySeen', [...seen].slice(-60)); store.set('casa.ntfyLast', d.id);
       const msg = String(d.message || '').toLowerCase();
       const fresh = !d.time || Date.now() / 1000 - d.time < 120; // le richieste del codice solo per eventi di adesso
+      // formato corto per le temperature: "temp;T soggiorno;U soggiorno;T bagno;U bagno;T camera;U camera;T brucamera;U brucamera"
+      if (/^temp\s*;/.test(msg)) {
+        const keys = ['temperatura soggiorno', 'umidità soggiorno', 'temperatura bagno', 'umidità bagno', 'temperatura camera da letto', 'umidità camera da letto', 'temperatura brucamera', 'umidità brucamera'];
+        const vals = msg.split(';').slice(1).map(v => v.trim());
+        return applyHub(keys.map((k, i) => vals[i] ? `${k}=${vals[i]}` : '').filter(Boolean).join(';'), fresh);
+      }
       if (msg.includes('=')) return applyHub(msg, fresh);
       // portoncino aperto con allarme "fuori casa" (il controllo lo fa l'automazione di Casa, che conosce lo stato vero)
       if (/fuori/.test(msg)) { values['allarme'] = 'Fuori casa'; store.set('casa.values', values); if (fresh) promptDisarm('Allarme inserito', 'hub' + d.id); }
@@ -1354,6 +1374,7 @@ Luce | lampadina | interruttore`;
     msg.split(/[\n;]+/).forEach(part => {
       const m = part.match(/^\s*(.+?)\s*=\s*(.+?)\s*$/); if (!m) return;
       const [, key, val] = m;
+      if (key === 'clima soggiorno') { values['clima soggiorno'] = val; n++; return; }
       if (key === 'allarme') {
         values['allarme'] = val; n++;
         if (alarmMode() === 'off' && $('pinBg').classList.contains('alarm')) closePin(); // disattivato altrove: tolgo la richiesta del codice
