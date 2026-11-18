@@ -550,7 +550,7 @@ Luce | lampadina | interruttore`;
   const $ = id => document.getElementById(id);
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 
-  const BUILD = '742c32cd15'; // cambia a ogni versione pubblicata: serve al pannello per accorgersi degli aggiornamenti
+  const BUILD = '35f2620076'; // cambia a ogni versione pubblicata: serve al pannello per accorgersi degli aggiornamenti
   let hubDownAt = 0, rainSoon = false, alarmShownFor = null, askCb = null, lastUpdateCheck = Date.now(), wxData = null, airData = null;
   let config = store.get('casa.config.v2', DEFAULT_CONFIG);
   if (store.get('casa.edited', false) !== true) config = DEFAULT_CONFIG;
@@ -1264,6 +1264,9 @@ Luce | lampadina | interruttore`;
     if (OFF_WORDS.includes(v)) return false;
     const n = parseFloat(v.replace(',', '.'));
     if (!isNaN(n)) return n > 0; // es. luminosità 0–100
+    // frasi più lunghe ("Riscaldamento in corso", "Calore", "Modalità: spento"…): prima i "spento", poi gli "acceso"
+    if (/spent|\boff\b|disattiv|non attiv|inattiv|chius|nessun/.test(v)) return false;
+    if (/riscald|calor|cald|heat|raffredd|cool|fredd|acces|attiv|\bon\b|auto|apert/.test(v)) return true;
     return null;
   }
   function applyResult(result, shortcut) {
@@ -1284,7 +1287,7 @@ Luce | lampadina | interruttore`;
         }
         const val = readBool(m[2]);
         if (val === null) continue;
-        items.filter(i => i.name.toLowerCase() === key || i.shortcut.toLowerCase() === key)
+        items.filter(i => i.name.toLowerCase() === key || i.shortcut.toLowerCase() === key || (i.icon === 'termometro' && /termostato/.test(key)))
              .forEach(i => { states[i.shortcut] = val; n++; });
       }
     } else if (shortcut) {
