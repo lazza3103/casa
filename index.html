@@ -159,6 +159,9 @@
   .tile.on { background: var(--on-bg); color: var(--on-text); }
   .tile.on .ic { background: var(--yellow); color: #fff; }
   .tile.on .st { color: var(--on-muted); }
+  .tile.offline { opacity: .55; }
+  .tile.offline .st { color: #ff9f0a !important; font-weight: 600; }
+  .tile.offline .ic { background: rgba(255,255,255,.12) !important; color: var(--muted) !important; }
   .tile.on.sec-away .ic, .tile.on.sec-night .ic { background: #ff3b30; color: #fff; }
   .tile.on.sec-off .ic { background: #30d158; color: #fff; box-shadow: none; }
   .tile.fun.magic.on { background: var(--on-bg); color: var(--on-text); }
@@ -546,7 +549,7 @@ Luce | lampadina | interruttore`;
   const $ = id => document.getElementById(id);
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 
-  const BUILD = '5878226513'; // cambia a ogni versione pubblicata: serve al pannello per accorgersi degli aggiornamenti
+  const BUILD = 'd0f3587493'; // cambia a ogni versione pubblicata: serve al pannello per accorgersi degli aggiornamenti
   let hubDownAt = 0, rainSoon = false, alarmShownFor = null, askCb = null, lastUpdateCheck = Date.now(), wxData = null, airData = null;
   let config = store.get('casa.config.v2', DEFAULT_CONFIG);
   if (store.get('casa.edited', false) !== true) config = DEFAULT_CONFIG;
@@ -588,7 +591,7 @@ Luce | lampadina | interruttore`;
   function categoryPage(pages, title, icons) {
     const groups = [], seen = new Set();
     for (const pg of pages) {
-      if (/^(casa|scene|sicurezza|pulizia)$/i.test(pg.name)) continue;
+      if (/^(casa|scene|sicurezza|pulizia|connettività)$/i.test(pg.name)) continue;
       const items = pg.groups.flatMap(g => g.items).filter(it => icons.includes(it.icon) && !seen.has(it.shortcut));
       items.forEach(it => seen.add(it.shortcut));
       // i sensori (temperatura/umidità) vanno nel riepilogo in alto, qui solo i comandi
@@ -607,10 +610,10 @@ Luce | lampadina | interruttore`;
     const pages = parse(config);
     const luci = categoryPage(pages, 'Luci', LIGHT_ICONS);
     const clima = categoryPage(pages, 'Clima', CLIMA_ICONS);
-    const top = pages.filter(p => /^(casa|scene|sicurezza|pulizia)$/i.test(p.name));
-    const rooms = pages.filter(p => !/^(casa|scene|sicurezza|pulizia)$/i.test(p.name));
+    const top = pages.filter(p => /^(casa|scene|sicurezza|pulizia|connettività)$/i.test(p.name));
+    const rooms = pages.filter(p => !/^(casa|scene|sicurezza|pulizia|connettività)$/i.test(p.name));
     // ordine fisso della barra laterale
-    const ORDER = ['casa', 'sicurezza', 'clima', 'luci', 'pulizia', 'scene'];
+    const ORDER = ['casa', 'sicurezza', 'clima', 'luci', 'pulizia', 'scene', 'connettività'];
     const all = [...top, ...(luci.groups.length ? [luci] : []), ...(clima.groups.length ? [clima] : [])];
     const pos = p => { const i = ORDER.indexOf(p.name.toLowerCase()); return i < 0 ? 99 : i; };
     return { top: all.sort((a, b) => pos(a) - pos(b)), rooms };
@@ -619,7 +622,7 @@ Luce | lampadina | interruttore`;
   // ================= Disegno =================
   function navIcon(name, isRoom) {
     if (isRoom) return 'stanza';
-    return { casa: 'casa', scene: 'scene', sicurezza: 'scudo', pulizia: 'robot', luci: 'lampadina', clima: 'clima' }[name.toLowerCase()] || 'stanza';
+    return { casa: 'casa', scene: 'scene', sicurezza: 'scudo', pulizia: 'robot', luci: 'lampadina', clima: 'clima', 'connettività': 'wifi' }[name.toLowerCase()] || 'stanza';
   }
 
   // nome mostrato: la pagina "Casa" si chiama Marinella
@@ -673,11 +676,12 @@ Luce | lampadina | interruttore`;
         sec.classList.add('framed');
         const head = el('div', 'grouphead');
         if (g.name) head.appendChild(el('h3', null, g.name));
-        const hint = el('button', 'refreshhint');
-        // porte/finestre cambiano spesso: promemoria dopo 1 minuto; temperatura/umidità dopo 10
-        hint.dataset.stale = g.items.some(i => ['porta', 'finestra', 'movimento', 'allarme'].includes(i.icon)) ? 1 : 10;
-        hint.addEventListener('click', refreshNow);
-        head.appendChild(hint);
+        // promemoria "aggiorna" solo per temperatura e umidità (porte e finestre arrivano in tempo reale da ntfy)
+        if (g.items.some(i => ['termometro', 'goccia'].includes(i.icon))) {
+          const hint = el('button', 'refreshhint'); hint.dataset.stale = 60;
+          hint.addEventListener('click', refreshNow);
+          head.appendChild(hint);
+        }
         sec.appendChild(head);
       } else if (g.name) sec.appendChild(el('h3', null, g.name));
       const compact = /^casa$/i.test(page.name) && /^(sicurezza|allarme)$/i.test(g.name); // in Casa: pulsanti allarme in colonna stretta
@@ -723,7 +727,7 @@ Luce | lampadina | interruttore`;
   setInterval(updateRefreshHints, 15000);
 
   // Sulla pagina Casa: una riga di avvisi con finestre/porte aperte (solo se ce ne sono)
-  function isRoomPage(page) { return !!page && !page.auto && !/^(casa|scene|sicurezza|pulizia|stanze)$/i.test(page.name); }
+  function isRoomPage(page) { return !!page && !page.auto && !/^(casa|scene|sicurezza|pulizia|connettività|stanze)$/i.test(page.name); }
 
   function renderAlerts(page, list) {
     const box = $('alerts');
@@ -734,11 +738,10 @@ Luce | lampadina | interruttore`;
       if (!its.length) { box.hidden = true; return; }
       const clima = its.filter(i => ['termometro', 'goccia'].includes(i.icon));
       const aperture = its.filter(i => !['termometro', 'goccia'].includes(i.icon));
-      const sets = [[clima, 10], [aperture, 1]].filter(([a]) => a.length);
+      const sets = [[clima, 60], [aperture, 0]].filter(([a]) => a.length);
       sets.forEach(([set, mins], k) => {
         if (k) box.appendChild(el('span', 'chipsep'));
-        const h = el('button', 'refreshhint'); h.dataset.stale = mins; h.addEventListener('click', refreshNow);
-        box.appendChild(h);
+        if (mins) { const h = el('button', 'refreshhint'); h.dataset.stale = mins; h.addEventListener('click', refreshNow); box.appendChild(h); }
         addChips(set);
       });
       box.hidden = false;
@@ -758,7 +761,7 @@ Luce | lampadina | interruttore`;
     }
     if (page && /^clima$/i.test(page.name)) {
       // una pillola per stanza: "Soggiorno 19,9° · 60%"
-      const rooms = parse(config).filter(pg => !/^(casa|scene|sicurezza|pulizia)$/i.test(pg.name));
+      const rooms = parse(config).filter(pg => !/^(casa|scene|sicurezza|pulizia|connettività)$/i.test(pg.name));
       let n = 0;
       for (const pg of rooms) {
         const its = pg.groups.flatMap(g => g.items).filter(i => i.sensor);
@@ -773,7 +776,7 @@ Luce | lampadina | interruttore`;
         box.appendChild(c); n++;
       }
       if (n) {
-        const h = el('button', 'refreshhint'); h.dataset.stale = 10; h.addEventListener('click', refreshNow);
+        const h = el('button', 'refreshhint'); h.dataset.stale = 60; h.addEventListener('click', refreshNow);
         box.prepend(h); // il promemoria per primo, sempre visibile
       }
       box.hidden = !n;
@@ -825,6 +828,9 @@ Luce | lampadina | interruttore`;
       const win = open.filter(i => i.icon === 'finestra').length;
       const warn = (icon, text, go) => { const c = el('button', 'chip red'); c.innerHTML = svg(icon); c.appendChild(el('span', null, text)); c.addEventListener('click', go || refreshNow); box.prepend(c); shown++; };
       if (rainSoon && win) warn('goccia', `Pioggia in arrivo, ${win > 1 ? win + ' finestre aperte' : 'finestra aperta'}`);
+      // accessori che non rispondono
+      const offN = Object.keys(store.get('casa.offline', {})).filter(k => all.some(i => i.shortcut === k));
+      if (offN.length) warn('wifi', offN.length > 1 ? `${offN.length} accessori non rispondono` : `${all.find(i => i.shortcut === offN[0]).name} non risponde`);
       // umidità alta (solo avviso): tocco → apre la stanza
       for (const r of highHumidity()) warn('goccia', `Umidità alta: ${r.room} ${r.val}%`, () => { current = r.room; store.set('casa.page', current); render(); $('pages').scrollLeft = 0; });
       // aria esterna scarsa: tocco → purificatore in automatico
@@ -876,9 +882,9 @@ Luce | lampadina | interruttore`;
       if (g.classList.contains('sq')) {
         // quadrati: quante righe entrano (min 100px) e lato = altezza riga
         // preferisco quadrati grandi (~120px); se non entrano almeno 2 righe, li rimpicciolisco invece di metterli in fila
-        let rows = Math.max(1, Math.floor((h + 10) / 120));
+        let rows = Math.max(1, Math.floor((h + 10) / Math.max(120, h / 2.6)));
         if (rows < 2 && h >= 2 * 70 + 8) rows = 2;
-        const side = Math.max(70, Math.min(150, Math.floor((h - 8 * (rows - 1)) / rows)));
+        const side = Math.max(70, Math.min(260, Math.floor((h - 8 * (rows - 1)) / rows)));
         g.classList.toggle('tiny', side < 100);
         g.style.setProperty('--rows', rows); g.style.setProperty('--rowh', side + 'px'); g.style.setProperty('--sqw', (side < 100 ? Math.max(118, Math.round(side * 1.45)) : side) + 'px'); // se bassi, un po' più larghi per leggere i nomi
         return;
@@ -932,6 +938,7 @@ Luce | lampadina | interruttore`;
     $('askTitle').textContent = n > 1 ? `Ci sono ${n} aperture` : (op[0].icon === 'porta' ? 'C’è una porta aperta' : 'C’è una finestra aperta');
     $('askText').textContent = op.map(i => i.name).join(', ') + (age > 1 && age < 600 ? ` (dati di ${age} min fa)` : '') + '. Inserire comunque l’allarme?';
     askCb = () => it.code ? askPin(`Codice per “${it.name}”`, () => run(it, btn)) : run(it, btn);
+    $('askYes').textContent = 'Inserisci comunque';
     $('askBg').classList.add('open');
   }
   const closeAsk = () => { $('askBg').classList.remove('open'); askCb = null; };
@@ -1044,14 +1051,25 @@ Luce | lampadina | interruttore`;
     const isAction = !it.toggle && !isScene;
     const b = el('button', 'tile' + (isScene ? ' scene' : '') + (isAction ? ' action' : '') + (it.big ? ' big' : '') + (on ? ' on' : '') + (on && secMode ? ' sec-' + secMode : ''));
     const ic = el('span', 'ic'); ic.innerHTML = svg(it.icon);
+    const isOff = !!store.get('casa.offline', {})[it.shortcut];
+    if (isOff) b.classList.add('offline');
     if (it.emoji === '✦') b.classList.add('fun', 'magic');
     else if (it.emoji) { ic.textContent = it.emoji; ic.classList.add('emo'); b.classList.add('fun'); }
     const tx = el('span', 'tx');
     tx.appendChild(el('div', 'nm', it.name));
-    if (it.toggle) tx.appendChild(el('div', 'st', stateText(it)));
+    if (isOff) tx.appendChild(el('div', 'st', 'Non risponde'));
+    else if (it.toggle) tx.appendChild(el('div', 'st', stateText(it)));
     b.append(ic, tx);
     if (it.code) { const l = el('span', 'lock'); l.innerHTML = svg('lucchetto'); b.appendChild(l); }
     b.addEventListener('click', () => {
+      if (/whatcdog|riavvia wi-?fi/i.test(it.shortcut || '')) {
+        if (isFullscreen()) exitFullscreen();
+        $('askTitle').textContent = 'Riavviare il Wi-Fi?';
+        $('askText').textContent = 'Internet cadrà per 5–6 minuti, poi torna da solo. Procedere?';
+        $('askYes').textContent = 'Riavvia';
+        askCb = () => askPin(`Codice per “${it.name}”`, () => run(it, b));
+        return $('askBg').classList.add('open');
+      }
       if (secMode === 'away' || secMode === 'night') {
         const op = openSensors();
         if (op.length) return askArm(it, b, op);
@@ -1066,6 +1084,7 @@ Luce | lampadina | interruttore`;
   // ================= Comandi rapidi =================
   const baseUrl = () => location.origin + location.pathname;
   function run(it, btn) {
+    if (/whatcdog|riavvia wi-?fi/i.test(it.shortcut || '')) store.set('casa.dimAfter', Date.now());
     const am = /allarme fuori casa/i.test(it.shortcut) ? 'Fuori casa' : /allarme notte/i.test(it.shortcut) ? 'Notte' : /cormorano disabilitato/i.test(it.shortcut) ? 'Disattivato' : null;
     if (am) { values['allarme'] = am; store.set('casa.values', values); store.set('casa.armedAt', Date.now()); if (am === 'Disattivato') queueSummary(); }
     if (it.toggle) { states[it.shortcut] = !states[it.shortcut]; store.set('casa.states.v2', states); }
@@ -1271,13 +1290,23 @@ Luce | lampadina | interruttore`;
       result = decodeURIComponent(sc.slice(i + 8).replace(/\+/g, ' ')); sc = sc.slice(0, i);
     }
     if (result !== null) { const n = applyResult(result, sc); if (n && /[=:]/.test(result)) store.set('casa.lastRefresh', Date.now()); }
-    if (q.has('ok')) setTimeout(() => toast('✓ ' + q.get('ok')), 300);
+    if (q.has('ok')) {
+      setTimeout(() => toast('✓ ' + q.get('ok')), 300);
+      const off = store.get('casa.offline', {}); if (sc && off[sc]) { delete off[sc]; store.set('casa.offline', off); }
+    }
     if (q.has('err')) {
       const sc = q.get('err');
       if (sc in states) { states[sc] = !states[sc]; store.set('casa.states.v2', states); }
-      setTimeout(() => toast('Comando non riuscito: ' + sc), 300);
+      const off = store.get('casa.offline', {}); off[sc] = Date.now(); store.set('casa.offline', off);
+      const itm = parse(config).flatMap(p => p.groups.flatMap(g => g.items)).find(i => i.shortcut === sc);
+      setTimeout(() => toast((itm ? itm.name : sc) + ' non risponde'), 300);
     }
     if (q.has('ok') || q.has('err') || q.has('result')) history.replaceState(null, '', baseUrl());
+    if (Date.now() - store.get('casa.dimAfter', 0) < 120000) {
+      store.set('casa.dimAfter', 0);
+      setTimeout(() => toast('Wi-Fi in riavvio: internet torna tra 5–6 minuti'), 400);
+      setTimeout(() => setDim(true), 2500);
+    }
   })();
 
   // ================= Orologio e meteo =================
@@ -1299,32 +1328,48 @@ Luce | lampadina | interruttore`;
   const NTFY_TOPIC = 'casa-f6e7cb4f62c7d16be10e';
   function listenHub() {
     if (!('EventSource' in window) || !/^https?:$/.test(location.protocol)) return;
-    const es = new EventSource(`https://ntfy.sh/${NTFY_TOPIC}/sse`);
+    // riprende dall'ultimo messaggio ricevuto: quelli arrivati mentre la pagina si ricaricava non vanno persi
+    const last = store.get('casa.ntfyLast', null);
+    const es = new EventSource(`https://ntfy.sh/${NTFY_TOPIC}/sse` + (last ? `?since=${encodeURIComponent(last)}` : ''));
+    const seen = new Set(store.get('casa.ntfySeen', []));
     es.onopen = () => { hubDownAt = 0; };
     es.onerror = () => { if (!hubDownAt) hubDownAt = Date.now(); };
     es.onmessage = e => {
-      let msg = '';
-      try { const d = JSON.parse(e.data); if (d.event !== 'message') return; msg = String(d.message || '').toLowerCase(); } catch { return; }
-      // stato di porte e finestre mandato dall'hub ("Finestra Cucina=aperta"): aggiorna solo quei sensori
-      if (msg.includes('=')) {
-        const sens = parse(config).flatMap(p => p.groups.flatMap(g => g.items)).filter(i => i.sensor && ['porta', 'finestra'].includes(i.icon));
-        let n = 0;
-        msg.split(/[\n;]+/).forEach(part => {
-          const m = part.match(/^\s*(.+?)\s*=\s*(.+?)\s*$/); if (!m) return;
-          sens.filter(i => i.shortcut.toLowerCase() === m[1] || i.name.toLowerCase() === m[1]).forEach(i => { values[i.shortcut.toLowerCase()] = m[2]; n++; });
-        });
-        msg.split(/[\n;]+/).forEach(part => {
-          const m = part.match(/^\s*allarme\s*=\s*(.+?)\s*$/); if (!m) return;
-          values['allarme'] = m[1]; store.set('casa.values', values); n++;
-          if (alarmMode() === 'off' && $('pinBg').classList.contains('alarm')) closePin(); // disattivato altrove: tolgo la richiesta del codice
-          if (alarmMode() === 'off' && !$('pinBg').classList.contains('open') && queueSummary()) showSummary();
-        });
-        if (n) { store.set('casa.values', values); render(); drawOpenings(); }
+      let d;
+      try { d = JSON.parse(e.data); } catch { return; }
+      if (d.event !== 'message' || !d.id || seen.has(d.id)) return;
+      seen.add(d.id); store.set('casa.ntfySeen', [...seen].slice(-60)); store.set('casa.ntfyLast', d.id);
+      const msg = String(d.message || '').toLowerCase();
+      const fresh = !d.time || Date.now() / 1000 - d.time < 120; // le richieste del codice solo per eventi di adesso
+      if (msg.includes('=')) return applyHub(msg, fresh);
+      // portoncino aperto con allarme "fuori casa" (il controllo lo fa l'automazione di Casa, che conosce lo stato vero)
+      if (/fuori/.test(msg)) { values['allarme'] = 'Fuori casa'; store.set('casa.values', values); if (fresh) promptDisarm('Allarme inserito', 'hub' + d.id); }
+    };
+  }
+  // messaggi "Nome=valore" dall'hub: porte e finestre, allarme, luci e prese (solo lo stato da mostrare, mai comandi)
+  function applyHub(msg, fresh) {
+    const all = parse(config).flatMap(p => p.groups.flatMap(g => g.items));
+    const offline = store.get('casa.offline', {});
+    let n = 0, temps = false;
+    msg.split(/[\n;]+/).forEach(part => {
+      const m = part.match(/^\s*(.+?)\s*=\s*(.+?)\s*$/); if (!m) return;
+      const [, key, val] = m;
+      if (key === 'allarme') {
+        values['allarme'] = val; n++;
+        if (alarmMode() === 'off' && $('pinBg').classList.contains('alarm')) closePin(); // disattivato altrove: tolgo la richiesta del codice
+        if (fresh && alarmMode() === 'off' && !$('pinBg').classList.contains('open') && queueSummary()) showSummary();
         return;
       }
-      // solo portoncino aperto con allarme "fuori casa" (il controllo lo fa l'automazione di Casa, che conosce lo stato vero)
-      if (/fuori/.test(msg)) { values['allarme'] = 'Fuori casa'; store.set('casa.values', values); promptDisarm('Allarme inserito', 'hub' + Date.now()); }
-    };
+      all.filter(i => i.shortcut.toLowerCase() === key || i.name.toLowerCase() === key).forEach(i => {
+        if (i.sensor && ['porta', 'finestra'].includes(i.icon)) { values[i.shortcut.toLowerCase()] = val; n++; }
+        else if (i.sensor && ['termometro', 'goccia'].includes(i.icon)) { values[i.shortcut.toLowerCase()] = val; n++; temps = true; }
+        else if (i.toggle) { const v = readBool(val); if (v !== null) { states[i.shortcut] = v; delete offline[i.shortcut]; n++; } }
+      });
+    });
+    if (!n) return;
+    store.set('casa.values', values); store.set('casa.states.v2', states); store.set('casa.offline', offline);
+    if (temps) store.set('casa.lastRefresh', Date.now()); // temperature appena arrivate: niente promemoria "aggiorna"
+    render(); drawOpenings();
   }
   listenHub();
   function tick() {
@@ -1511,19 +1556,15 @@ Luce | lampadina | interruttore`;
   $('sumBg').addEventListener('click', closeSummary); // basta un tocco, anche sulla scheda
   // dopo un aggiornamento (la pagina si ricarica) mostro il riepilogo in attesa, con i dati freschi
   setTimeout(() => { const sl = summarySlot(); if (sl && store.get('casa.summaryPending', null) === sl.key && !$('pinBg').classList.contains('open')) showSummary(); }, 1500);
-  // Primo tocco sullo screensaver: se il pannello non si usa da un'ora (o gli stati sono vecchi di un'ora) aggiorna tutto,
-  // altrimenti torna solo a tutto schermo. Le due cose non si fanno insieme (Comandi e tutto schermo si disturbano).
-  const REFRESH_AFTER = 60 * 60000; // un'ora
+  // Primo tocco sullo screensaver: torna a tutto schermo (e mostra il riepilogo se è il momento)
   $('dim').addEventListener('click', e => {
     e.stopPropagation();
-    const idle = Date.now() - lastUse, stale = Date.now() - store.get('casa.lastRefresh', 0);
     setDim(false); resetIdle(); lastUse = Date.now();
     // allarme "fuori casa": chi tocca il pannello sta entrando, chiedo subito codice o Face ID
     const sl = summarySlot(), due = sl && store.get('casa.summaryDone', null) !== sl.key;
     if (due) store.set('casa.summaryPending', sl.key);
     if (alarmMode() === 'away' && promptDisarm('Allarme inserito', 'tap' + Date.now())) return;
-    if (idle >= REFRESH_AFTER || stale >= REFRESH_AFTER) refreshNow(); // il riepilogo compare al ritorno, con i dati nuovi
-    else { goFullscreen(); if (due) showSummary(); }
+    goFullscreen(); if (due) showSummary(); // niente aggiornamento automatico: quasi tutto arriva in tempo reale da ntfy
   });
   ['pointerdown', 'touchstart'].forEach(ev => document.addEventListener(ev, resetIdle, { passive: true }));
 
